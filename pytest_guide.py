@@ -20,9 +20,11 @@ import pytest
 # pytest uses Python's built-in `assert`. No special assertEqual methods.
 # On failure it rewrites the assert to show you the actual values involved.
 # ---------------------------------------------------------------------------
+@pytest.mark.dude
 def test_basic_assert():
     result = 2 + 3
     assert result == 5
+    assert result != 6
 
 
 # ---------------------------------------------------------------------------
