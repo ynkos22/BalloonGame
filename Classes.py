@@ -3,15 +3,19 @@ from collections.abc import Callable
 import random
 import pandas as pd
 class Balloon:
-    def __init__(self, color: str, value: int, popped: bool) -> None:
+    def __init__(self, color: str, value: int, popped: bool, probability=None) -> None:
         self.color = color
         self.value = value
         self.popped = popped
+        self.probability = probability
     
     def pop(self) -> None:
         self.popped = True
+        self.value = 0
     
     def pop_prob(self) -> float:
+        if self.probability is not None:
+            return self.probability
         color = self.color
         color_prob_map = {
             "yellow": 0.1,
@@ -42,7 +46,8 @@ class Player:
         if move == "p":
             Balloon.inflate(balloon)
             if balloon.popped:
-                self.unrPnL -= balloon.value
+                self.unrPnL = 0
+                
             else:
                 self.unrPnL += 1
         if move == "c":
@@ -52,9 +57,10 @@ class Player:
         
 
 class Game:
-    def __init__(self, players: list[Player], num_balloons: int) -> None:
+    def __init__(self, players: list[Player], num_balloons: int, id: int) -> None:
         self.players = players
         self.num_balloons = num_balloons
+        self.id = id
 
     def start(self) -> pd.DataFrame:
         
@@ -85,17 +91,23 @@ class Game:
                 game_log = pd.concat([game_log, pd.DataFrame([log])], ignore_index=True)
                 current_turn += 1
             current_balloon_number += 1
+        game_log.to_csv(f"game_logs/game_{self.id}_log.csv", index=False)
         return game_log
 
     def print_summary(self, game_log: pd.DataFrame) -> None:
-        print("Game Summary:")
-        print(f"Total Balloons: {self.num_balloons}")
-        for player in self.players:
-            player_log = game_log[game_log["player_id"] == player.id]
-            print(f"Player {player.id}:")
-            print(f"  Total PnL: {player.PnL}")
-            print(f"  Total UnrPnL: {player.unrPnL}")
-            print(f"  Total Actions: {len(player_log)}")
-            print(f"  Total Pops: {len(player_log[player_log['popped'] == True])}")
+        # outputs a more readable summary of the game log as a csv file
+        summary = game_log.groupby("balloon_number").agg(
+            color = ("balloon_color", "first"),
+            value = ("balloon_value", "max"),
+            num_pumps = ("player_action", lambda x: (x == "p").sum()),
+            popped = ("popped", "max"),
+            turns = ("turn", "count"),
+            player_unrPnL = ("player_unrPnL", "last"),
+            player_PnL = ("player_PnL", "last")
+        )
+        
+        summary.to_csv(f"games/game_{self.id}_summary.csv")
+
+
 
 

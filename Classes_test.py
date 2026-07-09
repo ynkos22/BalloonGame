@@ -22,16 +22,21 @@ def test_pnl_calculation():
             return "c"
 
     testPlayer = Player(test_strategy, 1, 0, 0)
-    testBalloon = Balloon("red", 0, False)
-
+    testBalloon = Balloon("red", 0, False, 0)
+    # Test if player inflates balloon and updates unrPnL correctly
     testPlayer.action(testBalloon)
-    print(f"Player unrPnL: {testPlayer.unrPnL}, PnL: {testPlayer.PnL}")
     assert testPlayer.unrPnL == 1
-    assert testPlayer.PnL == 0
-    testPlayer.action(testBalloon)  # Inflate again
-    print(f"Player unrPnL: {testPlayer.unrPnL}, PnL: {testPlayer.PnL}")
-    assert testPlayer.unrPnL == 0
+    
+    # Test if player cashes out and updates PnL correctly
+    testPlayer.action(testBalloon)
     assert testPlayer.PnL == 1
+    # Test if popping mechanism works correctly
+    testBalloon = Balloon("blue", 0, False, 1)  # Set probability to 1 for guaranteed pop
+    testPlayer.action(testBalloon)
+    assert testBalloon.popped == True
+    assert testBalloon.value == 0
+    assert testPlayer.unrPnL == 0  # unrPnL should reset to 0 after popping
+    assert testPlayer.PnL == 1  # PnL should remain unchanged after popping
 
 
 @pytest.mark.game
@@ -43,7 +48,7 @@ def test_game_log():
             return "c"
 
     testPlayer = Player(test_strategy, 1, 0, 0)
-    testGame = Game([testPlayer], 10)
+    testGame = Game([testPlayer], 100, 3)
     game_log = testGame.start()
     display(game_log)
     assert all(game_log["balloon_value"] >= 0)
@@ -52,3 +57,15 @@ def test_game_log():
     assert min(game_log["player_PnL"]) >= 0
     assert min(game_log["player_unrPnL"]) >= 0
 
+@pytest.mark.game
+def test_game_summary():
+    def test_strategy(balloon):
+        if balloon.value < 2:
+            return "p"
+        else:
+            return "c"
+
+    testPlayer = Player(test_strategy, 1, 0, 0)
+    testGame = Game([testPlayer], 100, 3)
+    game_log = testGame.start()
+    testGame.print_summary(game_log)
