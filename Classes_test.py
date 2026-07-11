@@ -1,4 +1,4 @@
-
+import pandas as pd
 from Classes import Balloon, Player, Game
 import pytest
 from IPython.display import display
@@ -59,6 +59,7 @@ def test_game_log():
 
 @pytest.mark.game
 def test_game_summary():
+
     def test_strategy(balloon):
         if balloon.value < 2:
             return "p"
@@ -69,3 +70,71 @@ def test_game_summary():
     testGame = Game([testPlayer], 100, 3)
     game_log = testGame.start()
     testGame.print_summary(game_log)
+
+@pytest.mark.game
+def test_balloon_reset():
+    balloon1 = Balloon("yellow", 3, True)
+    balloon2 = Balloon("red", 3, True)
+    balloon3 = Balloon("blue", 2, True)
+    balloons = [balloon1, balloon2, balloon3]
+    Game.reset_balloons(balloons)
+    assert all(not balloon.popped for balloon in balloons)
+    assert all(balloon.value == 0 for balloon in balloons)
+
+
+@pytest.mark.game
+def test_turn_loop():
+    def always_pump_strategy(balloon, memory=None):
+        return "p"
+
+    balloon1 = Balloon("yellow", 3, False)
+    balloon2 = Balloon("red", 2, False)
+    balloons = [balloon1, balloon2]
+
+    testPlayer = Player(always_pump_strategy, 1, 0, 0, None)
+    testGame = Game([testPlayer], 100, 3)
+
+    log, action = testGame.per_turn_game_loop(balloons[0], 6, 2, testPlayer)
+
+    assert log["balloon_value"] == 3
+    assert log["turn"] == 3
+    assert log["balloon_number"] == 7
+    assert action == "p"
+
+@pytest.mark.game
+def test_balloon_loop():
+    def always_pump_strategy(balloon, memory=None):
+        return "p"
+    def always_cash_strategy(balloon, memory=None):
+        return "c"
+    balloon1 = Balloon("yellow", 3, False)
+    balloon2 = Balloon("red", 2, False)
+    balloons = [balloon1, balloon2]
+
+    testPlayer = Player(always_pump_strategy, 1, 0, 0, None)
+    testPlayer2 = Player(always_cash_strategy, 2, 0, 0, None)
+    testGame = Game([testPlayer, testPlayer2], 100, 3)
+
+    initial_log = pd.DataFrame(columns=["turn", "balloon_number", "balloon_color", "balloon_value", "player_id", "player_action", "popped", "player_unrPnL", "player_PnL"])
+    initial_log2 = pd.DataFrame(columns=["turn", "balloon_number", "balloon_color", "balloon_value", "player_id", "player_action", "popped", "player_unrPnL", "player_PnL"])
+    game_log, current_turn = testGame.per_balloon_game_loop(balloons, 0, 0, testPlayer, initial_log)
+    game_log2, current_turn2 = testGame.per_balloon_game_loop(balloons, 1, 0, testPlayer2, initial_log2)
+    assert current_turn >= 1
+    assert current_turn == len(game_log)
+    assert len(game_log2) == 1
+    assert all([action == "c" for action in game_log2["player_action"]])
+
+
+
+
+    
+
+
+    
+
+    
+    
+   
+
+
+
