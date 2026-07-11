@@ -3,6 +3,10 @@ from collections.abc import Callable
 import random
 from typing import List
 import pandas as pd
+import sqlite3
+
+
+
 class Balloon:
     def __init__(self, color: str, value: int, popped: bool, probability=None) -> None:
         self.color = color
@@ -36,43 +40,44 @@ class Balloon:
         else:
             self.pop()
 
-
-class Player:
-    def __init__(self, strategy: Callable[[Balloon, list], str], id: int, unrPnL: int, PnL: int, memory: list) -> None:
-        self.strategy = strategy
-        self.id = id
+class Strategy:
+    def __init__(self, name: str, unrPnL: int, PnL: int, db_path: str):
+        self.name = name
         self.unrPnL = unrPnL
         self.PnL = PnL
-        self.memory = memory
+        self.conn = sqlite3.connect(db_path)
 
-    def action(self, balloon) -> str:
-        move = self.strategy(balloon, self.memory)
-        if move == "p":
-            Balloon.inflate(balloon)
-            if balloon.popped:
-                self.unrPnL = 0
-                
-            else:
-                self.unrPnL += 1
-        if move == "c":
-            self.PnL += self.unrPnL
-            self.unrPnL = 0
-        return move
-        
+    def default_strat(self, balloon: Balloon) -> str:
+        if balloon.value < 1:
+            return "p"
+        else:
+            return "c"    
 
 class Game:
-    def __init__(self, players: list[Player], num_balloons: int, id: int) -> None:
+    
+    def __init__(self, players: list[Strategy], num_balloons: int, id: int, db_path: str) -> None:
         self.players = players
         self.num_balloons = num_balloons
         self.id = id
+        self.conn = sqlite3.connect(db_path)
+        cur = self.conn.cursor()
+        cur.execute(f"""CREATE TABLE IF NOT EXISTS game_{self.id}(turn INTEGER, 
+                                            balloon_number INTEGER, 
+                                            balloon_color TEXT, 
+                                            balloon_value INTEGER, 
+                                            strategy_name TEXT, 
+                                            player_action TEXT, 
+                                            popped INTEGER, 
+                                            player_unrPnL INTEGER, 
+                                            player_PnL INTEGER)""", (self.id))
 
     def start(self) -> None:
         # generate balloons:
         balloons = [Balloon(color=random.choice(["yellow", "red", "blue"]), value=0, popped=False) for _ in range(self.num_balloons)]
         # start game loop:
         for player in self.players:
-            game_log = self.per_player_game_loop(balloons, player)
-        game_log.to_csv(f"game_logs/game_{self.id}_player_{player.id}_log.csv", index = False)
+            self.per_player_game_loop(balloons, player)
+        
             
     @staticmethod
     def reset_balloons(balloons: List[Balloon]) -> None:
@@ -81,7 +86,7 @@ class Game:
             balloon.popped = False
         return balloons
 
-    def per_turn_game_loop(self, balloon: Balloon, balloon_number: int, turn: int, player: Player) -> dict:
+    def per_turn_game_loop(self, balloon: Balloon, balloon_number: int, turn: int, player: Strategy) -> dict:
         # We first report the current state of the game before the player takes an action
         log = {
             "balloon_value": balloon.value, 
@@ -90,7 +95,7 @@ class Game:
             "turn": turn + 1,
             "player_unrPnL": player.unrPnL,
             "player_PnL": player.PnL,
-            "player_id": player.id
+            "player_name": player.id
         }
         action = player.action(balloon) # Player action
         # Update the log with the action taken and whether the balloon popped
@@ -98,46 +103,39 @@ class Game:
         log["player_action"] = action
         return log, action
     
-    def per_balloon_game_loop(self, balloons: List[Balloon], balloon_number: int, turn: int, player: Player, game_log: pd.DataFrame) -> dict:
+    def per_balloon_game_loop(self, balloons: List[Balloon], balloon_number: int, turn: int, player: Strategy) -> dict:
         current_balloon = balloons[balloon_number]
         cash = False
         current_turn = turn
         # Loop until the balloon pops or the player cashes out
         while not current_balloon.popped and not cash:
             log, action = self.per_turn_game_loop(current_balloon, balloon_number, current_turn, player)
-            game_log = pd.concat([game_log, pd.DataFrame([log])], ignore_index=True)
+            cur = self.conn.cursor()
+            cur.execute(f"INSERT INTO game_{self.id} (?, ?, ?, ?, ?, ?, ?, ?, ?)", (self.id, 
+                                                                           log["turn"]+1, 
+                                                                           log["balloon_number"]+1, 
+                                                                           log["Balloon_value"], 
+                                                                           player.name, 
+                                                                           action, 
+                                                                           current_balloon.popped, 
+                                                                           log["player_unrPnL"], 
+                                                                           log["player_PnL"]))
+            self.conn.commit()
             current_turn += 1
             if action == "c":
                 cash = True
-        return game_log, current_turn
+        return current_turn
 
-    def per_player_game_loop(self, balloons: List[Balloon], player: Player) -> pd.DataFrame:
+    def per_player_game_loop(self, balloons: List[Balloon], player: Strategy) -> pd.DataFrame:
         #reset balloons before each player starts
         balloons = self.reset_balloons(balloons)
-        game_log = pd.DataFrame(columns=["turn", "balloon_number", "balloon_color", "balloon_value", "player_id", "player_action", "popped", "player_unrPnL", "player_PnL"])
         current_turn = 0
         current_balloon_number = 0
         while current_balloon_number < self.num_balloons:
-            results = self.per_balloon_game_loop(balloons, current_balloon_number, current_turn, player, game_log)
-            current_turn = results[1]
+            current_turn = self.per_balloon_game_loop(balloons, current_balloon_number, current_turn, player)
             current_balloon_number += 1
-            
-        return game_log
         
-    @staticmethod
-    def print_summary(game_log: pd.DataFrame) -> None:
-        # outputs a more readable summary of the game log as a csv file
-        summary = game_log.groupby("balloon_number").agg(
-            color = ("balloon_color", "first"),
-            value = ("balloon_value", "max"),
-            num_pumps = ("player_action", lambda x: (x == "p").sum()),
-            popped = ("popped", "max"),
-            turns = ("turn", "count"),
-            player_unrPnL = ("player_unrPnL", "last"),
-            player_PnL = ("player_PnL", "last")
-        )
-        
-        summary.to_csv(f"games/game_{self.id}_summary.csv")
+
 
 
 
