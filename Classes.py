@@ -27,7 +27,6 @@ class Balloon:
             "red": 0.3, 
             "blue": 0.5,
             "brown":0.8
-
         }
         return color_prob_map[color]
 
@@ -40,6 +39,7 @@ class Balloon:
         else:
             self.pop()
 
+# Parent class of all other strategies
 class Strategy:
     def __init__(self, name: str, unrPnL: int, PnL: int, db_path: str):
         self.name = name
@@ -47,12 +47,14 @@ class Strategy:
         self.PnL = PnL
         self.conn = sqlite3.connect(db_path)
 
+    # Default action that all strategies will use if not specified otherwise
     def action(self, balloon: Balloon) -> str:
         if balloon.value < 1:
             return "p"
         else:
             return "c"   
         
+    # Note: this is the method that is called during game loop FOR ALL strategies
     def main(self, balloon) -> str:
         move = self.action(balloon)
         if move == "p":
@@ -91,8 +93,7 @@ class Game:
         # start game loop:
         for player in self.players:
             self.per_player_game_loop(balloons, player)
-        
-            
+                   
     @staticmethod
     def reset_balloons(balloons: List[Balloon]) -> None:
         for balloon in balloons:
@@ -100,6 +101,7 @@ class Game:
             balloon.popped = False
         return balloons
 
+    # Returns the log of each turn and what player/strategy did
     def per_turn_game_loop(self, balloon: Balloon, balloon_number: int, turn: int, player: Strategy) -> dict:
         # We first report the current state of the game before the player takes an action
         log = {

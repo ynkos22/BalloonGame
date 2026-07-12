@@ -5,18 +5,17 @@ import numpy as np
 
 # Simple strategies for the balloon game
 
+# CONSTANT PUMP STRATEGY: Keep pumping the balloon until it reaches a value k
 class constant_pump(Strategy):
-    def __init__(self, name, unrPnL, PnL, db_path, k):
+    def __init__(self, name: str, unrPnL: int, PnL: int, db_path: str, k: int):
         super().__init__(name, unrPnL, PnL, db_path)
         self.k = k
 
-    def action(self, balloon):
-        
+    def action(self, balloon: Balloon) -> str:
         if balloon.value < self.k:
             return "p"
         else:
             return "c"
-
 
 
 class explore_then_exploit(Strategy):
@@ -30,8 +29,7 @@ class explore_then_exploit(Strategy):
     def unseen_color_handling(self, balloon: Balloon) -> str:
         # essentially assume a popping probability = 1/2
         return super().action(balloon)
-        
-
+    
     # Returns average lifespan of balloons of certain color
     def num_pumps(self, color: str) -> float:
         
