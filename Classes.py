@@ -47,11 +47,24 @@ class Strategy:
         self.PnL = PnL
         self.conn = sqlite3.connect(db_path)
 
-    def default_strat(self, balloon: Balloon) -> str:
+    def action(self, balloon: Balloon) -> str:
         if balloon.value < 1:
             return "p"
         else:
-            return "c"    
+            return "c"   
+        
+    def main(self, balloon) -> str:
+        move = self.action(balloon)
+        if move == "p":
+            Balloon.inflate(balloon)
+            if balloon.popped:
+                self.unrPnL = 0
+            else:
+                self.unrPnL += 1
+        if move == "c":
+            self.PnL += self.unrPnL
+            self.unrPnL = 0
+        return move
 
 class Game:
     
@@ -69,7 +82,8 @@ class Game:
                                             player_action TEXT, 
                                             popped INTEGER, 
                                             player_unrPnL INTEGER, 
-                                            player_PnL INTEGER)""", (self.id))
+                                            player_PnL INTEGER)""")
+        self.conn.commit()
 
     def start(self) -> None:
         # generate balloons:
@@ -97,7 +111,7 @@ class Game:
             "player_PnL": player.PnL,
             "player_name": player.id
         }
-        action = player.action(balloon) # Player action
+        action = player.main(balloon) # Player action
         # Update the log with the action taken and whether the balloon popped
         log["popped"] = balloon.popped
         log["player_action"] = action

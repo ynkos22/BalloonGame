@@ -1,5 +1,5 @@
 import pandas as pd
-from Classes import Balloon, Player, Game
+from Classes import Balloon, Strategy, Game
 import pytest
 from IPython.display import display
 
@@ -123,6 +123,25 @@ def test_balloon_loop():
     assert current_turn == len(game_log)
     assert len(game_log2) == 1
     assert all([action == "c" for action in game_log2["player_action"]])
+
+@pytest.mark.sql
+def test_sql_init():
+    test_strat = Strategy("test_strat", 0, 0, "game_logs.db")
+    test_game = Game([test_strat], 100, 1, "game_logs.db")
+
+    df = pd.read_sql_query("SELECT * FROM game_1", test_game.conn)
+    # Make sure columns are correct
+    assert list(df.columns) == ["turn", 
+                        "balloon_number", 
+                        "balloon_color", 
+                        "balloon_value", 
+                        "strategy_name", 
+                        "player_action", 
+                        "popped", 
+                        "player_unrPnL", 
+                        "player_PnL"]
+    # Make sure there are no entries yet
+    assert len(df) == 0
 
 
 

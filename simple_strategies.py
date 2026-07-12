@@ -23,18 +23,24 @@ class explore_then_exploit(Strategy):
 
     def unseen_color_handling(self, balloon: Balloon) -> str:
         # essentially assume a popping probability = 1/2
-        return super().default_strat(balloon)
+        return super().action(balloon)
         
+
+    # Returns average lifespan of balloons of certain color
     def num_pumps(self, color: str) -> float:
+        
         cur = self.conn.cursor()
-        cur.execute(f"""SELECT balloon_color AS color, AVG(balloon_value)-1 as average_lifespan 
-                    FROM game_{self.game_id} WHERE balloon_color = ?""", (color,))
+        cur.execute(f"""SELECT balloon_color AS color, AVG(end_value) as average_lifespan 
+                    FROM (SELECT balloon_color, balloon_number, MAX(balloon_value-1) AS end_value FROM game_{self.game_id} WHERE balloon_color = ? GROUP BY balloon_number)""", (color,))
         row = cur.fetchone()
         return row[1]
         
-    
+    # Takes in a balloon and returns aproprate move ("p" or "c")
+    # Uses average lifespan of the color of balloon 
+    # This overrides parent class default action method
     def action(self, balloon: Balloon) -> str:
-
+        
+        # Checks how many balloons we have seen
         cur = self.conn.cursor()
         cur.execute(f"SELECT COUNT(DISTINCT balloon_number) from game_{self.game_id}")
         db_size = cur.fetchone()[0]
@@ -47,6 +53,7 @@ class explore_then_exploit(Strategy):
             cur.execute(f"SELECT DISTINCT balloon_color from game_{self.game_id}")
             seen_colors = cur.fetchall()
             if balloon.color not in seen_colors:
+                # If we haven't seen color assume 1/2 probability
                 self.unseen_color_handling(balloon)
             else:  
                 average_lifespan = self.num_pumps(balloon.color) #Note: this is a float
@@ -54,19 +61,9 @@ class explore_then_exploit(Strategy):
                     return "p"
                 else:
                     return "c"
-                
-    def main(self, balloon) -> str:
-        move = self.action(balloon, self.memory)
-        if move == "p":
-            Balloon.inflate(balloon)
-            if balloon.popped:
-                self.unrPnL = 0
-            else:
-                self.unrPnL += 1
-        if move == "c":
-            self.PnL += self.unrPnL
-            self.unrPnL = 0
-        return move
+    
+
+    
             
         
 
