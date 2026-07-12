@@ -5,13 +5,19 @@ import numpy as np
 
 # Simple strategies for the balloon game
 
-def constant_pump(balloon, memory):
-    pars = memory[1]
-    k = pars[0]
-    if balloon.value < k:
-        return "p"
-    else:
-        return "c"
+class constant_pump(Strategy):
+    def __init__(self, name, unrPnL, PnL, db_path, k):
+        super().__init__(name, unrPnL, PnL, db_path)
+        self.k = k
+
+    def action(self, balloon):
+        
+        if balloon.value < self.k:
+            return "p"
+        else:
+            return "c"
+
+
 
 class explore_then_exploit(Strategy):
     def __init__(self, ratio: int, post_explore_updates: bool, num_balloons: int, db_path: str, game_id: int) -> None:
@@ -51,12 +57,13 @@ class explore_then_exploit(Strategy):
         else:
             # Exploitation phase
             cur.execute(f"SELECT DISTINCT balloon_color from game_{self.game_id}")
-            seen_colors = cur.fetchall()
+            seen_colors_tuples = cur.fetchall()
+            seen_colors = [tuple[0] for tuple in seen_colors_tuples]
             if balloon.color not in seen_colors:
                 # If we haven't seen color assume 1/2 probability
-                self.unseen_color_handling(balloon)
+                return self.unseen_color_handling(balloon)
             else:  
-                average_lifespan = self.num_pumps(balloon.color) #Note: this is a float
+                average_lifespan = self.num_pumps(balloon.color) # Note: this is a float
                 if balloon.value < np.floor(average_lifespan):
                     return "p"
                 else:
