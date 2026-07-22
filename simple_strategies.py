@@ -7,8 +7,8 @@ import numpy as np
 
 # CONSTANT PUMP STRATEGY: Keep pumping the balloon until it reaches a value k
 class constant_pump(Strategy):
-    def __init__(self, name: str, unrPnL: int, PnL: int, db_path: str, k: int):
-        super().__init__(name, unrPnL, PnL, db_path)
+    def __init__(self, db_path: str, k: int):
+        super().__init__(name = "Constant_pump", unrPnL = 0, PnL = 0, db_path = db_path)
         self.k = k
 
     def action(self, balloon: Balloon) -> str:
@@ -19,9 +19,8 @@ class constant_pump(Strategy):
 
 
 class explore_then_exploit(Strategy):
-    def __init__(self, ratio: int, post_explore_updates: bool, num_balloons: int, db_path: str, game_id: int) -> None:
+    def __init__(self, ratio: int, num_balloons: int, db_path: str, game_id: int) -> None:
         super().__init__(name="Explore then Exploit", unrPnL=0, PnL=0, db_path=db_path)
-        self.post_explore_updates = post_explore_updates
         self.ratio = ratio
         self.num_balloons = num_balloons
         self.game_id = game_id
@@ -60,7 +59,7 @@ class explore_then_exploit(Strategy):
             if balloon.color not in seen_colors:
                 # If we haven't seen color assume 1/2 probability
                 return self.unseen_color_handling(balloon)
-            else:  
+            else: 
                 average_lifespan = self.num_pumps(balloon.color) # Note: this is a float
                 if balloon.value < np.floor(average_lifespan):
                     return "p"

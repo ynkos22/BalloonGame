@@ -111,7 +111,7 @@ class Game:
             "turn": turn + 1,
             "player_unrPnL": player.unrPnL,
             "player_PnL": player.PnL,
-            "player_name": player.id
+            "player_name": player.name
         }
         action = player.main(balloon) # Player action
         # Update the log with the action taken and whether the balloon popped
@@ -130,7 +130,7 @@ class Game:
             cur.execute(f"INSERT INTO game_{self.id} (?, ?, ?, ?, ?, ?, ?, ?, ?)", (self.id, 
                                                                            log["turn"]+1, 
                                                                            log["balloon_number"]+1, 
-                                                                           log["Balloon_value"], 
+                                                                           log["balloon_value"], 
                                                                            player.name, 
                                                                            action, 
                                                                            current_balloon.popped, 
@@ -151,8 +151,16 @@ class Game:
             current_turn = self.per_balloon_game_loop(balloons, current_balloon_number, current_turn, player)
             current_balloon_number += 1
         
+    # Converts relavant part of database into csv doc
+    # and saves it into game_logs
+    # file name: "game_{game_id}_log"
+    @staticmethod
+    def print_summary(game_id: int) -> None:
+        conn = sqlite3.Connection("game_logs.db")
 
-
+        game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
+        game_log.to_csv(f"game_logs/game_{game_id}_log", index = False)
+        
 
 
 

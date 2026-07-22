@@ -2,6 +2,8 @@ import pandas as pd
 from Classes import Balloon, Strategy, Game
 import pytest
 from IPython.display import display
+import sqlite3
+
 
 @pytest.mark.balloon
 def test_popping_inflation():
@@ -142,6 +144,34 @@ def test_sql_init():
                         "player_PnL"]
     # Make sure there are no entries yet
     assert len(df) == 0
+
+
+@pytest.mark.summary
+def test_summary():
+    conn = sqlite3.Connection("game_logs.db")
+    cur = conn.cursor()
+    df = pd.read_sql_query("SELECT * FROM game_1", conn)
+    
+    # format expected: turn, balloon_number, balloon_color, balloon_value, strategy_name, player_action, popped, player_unrPnL, player_PnL
+    assert len(df) == 0 # make sure the table is empty
+
+    cur.execute('INSERT INTO game_1 VALUES (1, 2, "R", 3, "test_strat", "p", 1, 0, 0)')
+    conn.commit()
+    df = pd.read_sql_query("SELECT * FROM game_1", conn)
+    assert len(df) == 1
+
+    Game.print_summary(1)
+
+    try:
+        df = pd.read_csv("game_logs/game_1_log")
+        assert len(df) == 1
+        assert list(df.iloc[0]) == [1, 2, "R", 3, "test_strat", "p", 1, 0, 0]
+    except FileNotFoundError:
+        print("can't find file")
+
+    # reverse the changes for testing purposes
+    cur.execute("DELETE FROM game_1")
+    conn.commit()
 
 
 
