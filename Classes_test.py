@@ -174,8 +174,7 @@ def test_summary():
     conn.commit()
 
 
-
-
+@pytest.mark.full_game
     
 
 

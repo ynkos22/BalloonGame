@@ -87,6 +87,7 @@ class Game:
                                             player_PnL INTEGER)""")
         self.conn.commit()
 
+    # This method runs the game
     def start(self) -> None:
         # generate balloons:
         balloons = [Balloon(color=random.choice(["yellow", "red", "blue"]), value=0, popped=False) for _ in range(self.num_balloons)]
@@ -143,7 +144,7 @@ class Game:
         return current_turn
 
     def per_player_game_loop(self, balloons: List[Balloon], player: Strategy) -> pd.DataFrame:
-        #reset balloons before each player starts
+        # reset balloons before each player starts
         balloons = self.reset_balloons(balloons)
         current_turn = 0
         current_balloon_number = 0
