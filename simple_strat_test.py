@@ -5,16 +5,16 @@ from Classes import Balloon
 from Classes import Game
 import sqlite3
 import pandas as pd
-
+from config import DATABASE_PATH
 
 @pytest.mark.exploit
 def test_override():
     # Test if action of child class overrides parent method
     
-    my_strat = explore_then_exploit(0.5, True, 100, "game_logs.db", 1)
+    my_strat = explore_then_exploit(0.5, 100, 1)
     test_balloon = Balloon("yellow", 2, False, 0)
     move = my_strat.action(test_balloon)
-    my_game = Game([my_strat], 100, 1, "game_logs.db")
+    my_game = Game([my_strat], 100, 1)
 
     # Default parent action should cash since value >= 1
     assert move != "c"
@@ -25,7 +25,7 @@ def test_unseen_handling():
     # Unseen balloons be pumped once and then cashed
 
     test_balloon  = Balloon("purple", 0, False, 0)
-    my_strat = explore_then_exploit(0.5, True, 100, "game_logs.db", 1)
+    my_strat = explore_then_exploit(0.5, 100, 1)
 
     move = my_strat.unseen_color_handling(test_balloon)
     assert move == "p"
@@ -35,12 +35,12 @@ def test_unseen_handling():
     move2 = my_strat.unseen_color_handling(test_balloon2)
     assert move2 == "c"
 
-@pytest.mark.sql
+@pytest.mark.exploit
 def test_num_pumps():
     
-    test_strat = explore_then_exploit(0.5, True, 100, "game_logs.db", 1)
-    test_game = Game([test_strat], 100, 1, "game_logs.db")
-    conn = sqlite3.connect("game_logs.db")
+    test_strat = explore_then_exploit(0.5, 100, 1)
+    test_game = Game([test_strat], 100, 1)
+    conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
     cur.execute('INSERT INTO game_1 VALUES (1, 2, "yellow", 1, "test_strat", "p", 1, 0, 0)')
     cur.execute('INSERT INTO game_1 VALUES (2, 2, "yellow", 9, "test_strat", "p", 1, 0, 0)')
@@ -54,9 +54,9 @@ def test_num_pumps():
 
 @pytest.mark.exploit
 def test_action():
-    test_strat = explore_then_exploit(0.25, True, 5, "game_logs.db", 1)
-    test_game = Game([test_strat], 5, 1, "game_logs.db")
-    conn = sqlite3.connect("game_logs.db")
+    test_strat = explore_then_exploit(0.25, 5, 1)
+    test_game = Game([test_strat], 5, 1)
+    conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
     cur.execute('DELETE FROM game_1')
 
@@ -95,5 +95,7 @@ def test_action():
 
     cur.execute('DELETE FROM game_1')
     conn.commit()
+
+
 
 

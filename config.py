@@ -1,0 +1,6 @@
+
+# EASY VARIABLE CHANGES 
+
+
+DATABASE_PATH = "game_logs.db"
+GAME_LOGS_CSV_FOLDER_PATH = "game_logs/"

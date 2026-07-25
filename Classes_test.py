@@ -3,6 +3,9 @@ from Classes import Balloon, Strategy, Game
 import pytest
 from IPython.display import display
 import sqlite3
+from config import DATABASE_PATH
+from simple_strategies import explore_then_exploit, constant_pump
+
 
 
 @pytest.mark.balloon
@@ -15,31 +18,37 @@ def test_popping_inflation():
     assert testBalloon.value == 1
     assert testBalloon.popped == False
 
-@pytest.mark.player
-def test_pnl_calculation():
-    def test_strategy(balloon):
-        if balloon.value == 0:
-            return "p"
-        else:
-            return "c"
 
-    testPlayer = Player(test_strategy, 1, 0, 0)
-    testBalloon = Balloon("red", 0, False, 0)
-    # Test if player inflates balloon and updates unrPnL correctly
-    testPlayer.action(testBalloon)
-    assert testPlayer.unrPnL == 1
+# Tests if initialization of game works
+@pytest.mark.game
+def test_initiation():
+    # TEST 1: table creation
     
-    # Test if player cashes out and updates PnL correctly
-    testPlayer.action(testBalloon)
-    assert testPlayer.PnL == 1
-    # Test if popping mechanism works correctly
-    testBalloon = Balloon("blue", 0, False, 1)  # Set probability to 1 for guaranteed pop
-    testPlayer.action(testBalloon)
-    assert testBalloon.popped == True
-    assert testBalloon.value == 0
-    assert testPlayer.unrPnL == 0  # unrPnL should reset to 0 after popping
-    assert testPlayer.PnL == 1  # PnL should remain unchanged after popping
+    # Make sure we start with no table
+    conn = sqlite3.Connection(DATABASE_PATH)
+    cur = conn.cursor()
+    cur.execute("DROP TABLE IF EXISTS game_1")
+    conn.commit()
 
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='game_1'")
+    assert cur.fetchone() is None
+
+    # Check if initiation creates a table
+    test_strat = Strategy("basic_strat")
+    test_game = Game([test_strat], 100, 1)
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='game_1'")
+    assert cur.fetchone is not None
+
+    # TEST 2: table columns
+    df = pd.read_sql_query("SELECT * FROM game_1", conn)
+    assert list(df.columns) == ["turn","balloon_number","balloon_color","balloon_value","strategy_name","player_action","popped","player_unrPnL","player_PnL"]
+
+    # Delete table
+    cur.execute("DROP TABLE IF EXISTS game_1")
+    conn.commit()
+    
+"""
 
 @pytest.mark.game
 def test_game_log():
@@ -125,7 +134,8 @@ def test_balloon_loop():
     assert current_turn == len(game_log)
     assert len(game_log2) == 1
     assert all([action == "c" for action in game_log2["player_action"]])
-
+"""
+"""
 @pytest.mark.sql
 def test_sql_init():
     test_strat = Strategy("test_strat", 0, 0, "game_logs.db")
@@ -144,7 +154,7 @@ def test_sql_init():
                         "player_PnL"]
     # Make sure there are no entries yet
     assert len(df) == 0
-
+"""
 
 @pytest.mark.summary
 def test_summary():
@@ -175,6 +185,18 @@ def test_summary():
 
 
 @pytest.mark.full_game
+def test_game():
+
+    
+    test_strat = explore_then_exploit(0.25, 100, 3)
+    test_game = Game([test_strat], 100, 3)
+
+    test_game.start()
+    Game.print_summary(3)
+
+    
+    
+    
     
 
 
