@@ -54,7 +54,10 @@ class Strategy:
         else:
             return "c"   
         
-    # Note: this is the method that is called during game loop FOR ALL strategies
+    # NOTE: this is the method that is called during game loop FOR ALL strategies
+    # returns strategy's action/move on a certain balloon
+    # updates unrealized PnL and PnL apropriately
+    # NOTE: cashed balloons are NOT reset, but popped balloons ARE
     def main(self, balloon) -> str:
         move = self.action(balloon)
         if move == "p":
@@ -173,8 +176,8 @@ class Game:
         # Loop until the balloon pops or the player cashes out
         while not current_balloon.popped and not cashed:
             
-            log, action = self.per_turn_game_loop(current_balloon, balloon_number, current_turn, player)
-
+            log = self.per_turn_game_loop(current_balloon, balloon_number, current_turn, player)
+            action = log["player_action"]
             # Records in SQL DATABASE
             cur = self.conn.cursor()
             cur.execute(f"INSERT INTO game_{self.id} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (log["turn"], 
@@ -198,7 +201,6 @@ class Game:
 
     # This runs at each turn (could be the same balloon for several turns)
     # Returns the log of each turn and what player/strategy did as a dict
-    # Returns action of player
     def per_turn_game_loop(self, balloon: Balloon, balloon_number: int, turn: int, player: Strategy) -> tuple[dict, str]:
 
         # We first report the current state of the game before the player takes an action
@@ -209,17 +211,15 @@ class Game:
             "turn": turn + 1,
             "player_unrPnL": player.unrPnL,
             "player_PnL": player.PnL,
-            "player_name": player.name
+            "strategy_name": player.name
         }
 
-
         action = player.main(balloon) # Player action
-
 
         # Update the log with the action taken and whether the balloon popped
         log["popped"] = balloon.popped
         log["player_action"] = action
-        return log, action
+        return log
     
     
 

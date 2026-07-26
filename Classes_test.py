@@ -47,7 +47,94 @@ def test_initiation():
     # Delete table
     cur.execute("DROP TABLE IF EXISTS game_1")
     conn.commit()
+
+# Tests if the innermost loop that runs at every turn works
+@pytest.mark.game
+def test_turn_loop():
+    balloon_color = "yellow"
+    balloon_value = 1
+    strategy_name = "basic_strat" 
+    test_strat = Strategy(strategy_name)
+    test_balloon = Balloon(balloon_color, balloon_value, False, 0)
+    balloon_number = 5
+    turn = 2
+    test_game = Game([test_strat], 100, 1)
+
+    # TEST 1: type, dimension correct
+    response = test_game.per_turn_game_loop(test_balloon, balloon_number, turn, test_strat)
+    assert type(response) is dict
+    assert len(response) == 9
+
+    # TEST 2: columns correct
+    # Order doesn't matter, but we assert bijection
+    columns = ["turn","balloon_number","balloon_color","balloon_value","strategy_name","player_action","popped","player_unrPnL","player_PnL"]
+    for key in list(response.keys()):
+        assert key in columns
+
+    for column in columns:
+        assert column in list(response.keys())
+
+
+
     
+
+# Tests if action method works
+@pytest.mark.strategy
+def test_action():
+
+    # TEST 1: pumps if value == 0
+    test_strat = Strategy("basic_strat")
+    test_balloon = Balloon("yellow", 0, False, 0)
+    assert test_strat.action(test_balloon) == "p"
+
+    # TEST 2: cashes if value >= 1
+    test_balloon.value += 1
+    assert test_strat.action(test_balloon) == "c"
+
+# Tests if main method works
+@pytest.mark.strategy
+def test_main():
+    # TEST 1: Check if successful inflation works
+    test_strat = Strategy("basic_strat")
+    test_balloon = Balloon("yellow", 0, False, 0) # since value == 0, action should be "p"
+
+    assert test_strat.main(test_balloon) == "p"
+    assert test_balloon.value == 1
+    assert test_strat.unrPnL == 1
+
+    # TEST 2: Check handling of popped balloon
+
+    # define a strategy that always pumps
+    class test_strat(Strategy):
+        def __init__(self, name):
+            super().__init__(name)
+
+        def action(self, balloon: Balloon) -> str:
+            if balloon.value < 200:
+                return "p"
+            else:
+                return "c"
+    test_balloon2 = Balloon("yellow", 100, False, 1)
+    test_strat2 = test_strat("always_pump")
+    test_strat2.unrPnL = 100
+
+    assert test_strat2.unrPnL == 100
+    assert test_balloon2.popped == False
+    assert test_strat2.main(test_balloon2) == "p"
+    assert test_balloon2.popped == True
+    assert test_balloon2.value == 0
+    assert test_strat2.unrPnL == 0
+
+    # TEST 3: Check if cashing works
+    test_balloon3 = Balloon("yellow", 201, False, 0)
+    test_strat2.unrPnL = 201
+    assert test_strat2.main(test_balloon3) == "c"
+    assert test_strat2.PnL == 201
+    assert test_strat2.unrPnL == 0
+    
+
+
+
 """
 
 @pytest.mark.game
