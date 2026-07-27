@@ -8,7 +8,7 @@ import numpy as np
 # CONSTANT PUMP STRATEGY: Keep pumping the balloon until it reaches a value k
 class constant_pump(Strategy):
     def __init__(self, k: int):
-        super().__init__(name = "Constant_pump", unrPnL = 0, PnL = 0)
+        super().__init__(name = "Constant_pump")
         self.k = k
 
     def action(self, balloon: Balloon) -> str:
@@ -20,7 +20,7 @@ class constant_pump(Strategy):
 
 class explore_then_exploit(Strategy):
     def __init__(self, ratio: int, num_balloons: int, game_id: int) -> None:
-        super().__init__(name="Explore then Exploit", unrPnL=0, PnL=0)
+        super().__init__(name="Explore then Exploit")
         self.ratio = ratio
         self.num_balloons = num_balloons
         self.game_id = game_id
