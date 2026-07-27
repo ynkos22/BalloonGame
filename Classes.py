@@ -62,10 +62,7 @@ class Strategy:
         move = self.action(balloon)
         if move == "p":
             Balloon.inflate(balloon)
-            if balloon.popped:
-                self.unrPnL = 0
-            else:
-                self.unrPnL += 1
+            self.unrPnL = balloon.value
         if move == "c":
             self.PnL += self.unrPnL
             self.unrPnL = 0
