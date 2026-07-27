@@ -145,6 +145,7 @@ class Game:
     # Highest level loop that runs for every player
     # Goes through all balloons in the list asking player for their action 
     # This runs until player has popped or cashed all balloons in the list
+    # NOTE: turn and balloon_number are 0-indexed, but are logged as 1-indexed
     def per_player_game_loop(self, balloons: List[Balloon], player: Strategy) -> pd.DataFrame:
         # reset balloons before each player starts
         balloons = self.reset_balloons(balloons)
@@ -154,17 +155,16 @@ class Game:
         current_balloon_number = 0
 
         while current_balloon_number < self.num_balloons:
-            current_turn = self.per_balloon_game_loop(balloons, current_balloon_number, current_turn, player)
+            current_turn = self.per_balloon_loop(balloons, current_balloon_number, current_turn, player)
             current_balloon_number += 1
-
 
 
     # This loop runs once per balloon (same balloon can survive multiple turns)
     # This function 
-    # 1. returns the turn number after the balloon has been either cashed or popped
-    # 2. logs in SQL database: turn, balloon_number, balloon_color, balloon_value, name of strat, action, popped?, unr_PnL, PnL
+    # 1. returns the turn number after the balloon has been either cashed or popped (i.e the next turn number)
+    # 2. records log in SQL database: turn, balloon_number, balloon_color, balloon_value, name of strat, action, popped?, unr_PnL, PnL
 
-    def per_balloon_game_loop(self, balloons: List[Balloon], balloon_number: int, turn: int, player: Strategy) -> dict:
+    def per_balloon_loop(self, balloons: List[Balloon], balloon_number: int, turn: int, player: Strategy) -> dict:
 
         # NOTE: balloon_number is 0-indexed
         # cashed == True if player cashed

@@ -75,8 +75,73 @@ def test_turn_loop():
         assert column in list(response.keys())
 
 
+# Tests if the per_balloon loop works
+@pytest.mark.game
+def test_per_balloon_loop():
+
+    # Define a strategy that pumps k times then cashes
+    class cash_after_k(Strategy):
+        def __init__(self, name: str, k: int):
+            self.k = k
+            super().__init__(name)
+
+        def action(self, balloon: Balloon):
+            if balloon.value < self.k:
+                return "p"
+            else:
+                return "c"
+
+    test_strat = cash_after_k("cash_after_8", 8)
+    test_game = Game([test_strat], 100, 1)
+    test_balloon = Balloon("yellow", 0, False, 0)
+    balloons = [test_balloon]
+
+
+    # TEST 1: returns correct turn number
+    assert test_game.per_balloon_loop([test_balloon], 0, 1, test_strat) == 10 # Pumps 8 times then cashes once (total=9) so next is 10
+
+    # TEST 2: records correctly into SQL database
+    # clear existing tables:
+    Game.reset_balloons(balloons)
+    Game.clear_game(1)
+    test_game.per_balloon_loop([test_balloon], 0, 0, test_strat)
+    conn = sqlite3.Connection(DATABASE_PATH)
+    cur = conn.cursor()
+
+    # We should have 9 entries / rows
+    cur.execute("SELECT COUNT(*) FROM game_1")
+    assert cur.fetchone()[0] == 9
+
+    # Check if the entires are correct
+    for i in range(1, 10):
+        if i<9:
+            # should always pump
+            cur.execute(f"SELECT player_action FROM game_1 WHERE turn = {i}")
+            assert cur.fetchone()[0] == "p"
+            # unrealized PnL is recorded BEFORE action and is 0-indexed
+            cur.execute(f"SELECT player_unrPnL FROM game_1 WHERE turn = {i}")
+            assert cur.fetchone()[0] == i-1
+            # should all be the same balloon
+            cur.execute(f"SELECT balloon_number FROM game_1 WHERE turn = {i}")
+            assert cur.fetchone()[0] == 1
+        else:
+            # last action should be cash
+            cur.execute(f"SELECT player_action FROM game_1 WHERE turn = {i}")
+            assert cur.fetchone()[0] == "c"
+            # PnL is updated correctly after cashing
+            cur.execute(f"SELECT player_PnL FROM game_1 WHERE turn = {i}")
+            assert cur.fetchone()[0] == 8
+    # Reset the table
+    Game.clear_game(1)
 
     
+@pytest.mark.game
+def test_end_to_end():
+    test_strat = Strategy("basic_strat")
+    test_game = Game([test_strat], 100, 1)
+    test_game.start()
+    test_game.print_summary(1)
+    test_game.clear_game(1)
 
 # Tests if action method works
 @pytest.mark.strategy
@@ -133,42 +198,6 @@ def test_main():
     assert test_strat2.unrPnL == 0
     
 
-
-
-"""
-
-@pytest.mark.game
-def test_game_log():
-    def test_strategy(balloon):
-        if balloon.value < 2:
-            return "p"
-        else:
-            return "c"
-
-    testPlayer = Player(test_strategy, 1, 0, 0)
-    testGame = Game([testPlayer], 100, 3)
-    game_log = testGame.start()
-    display(game_log)
-    assert all(game_log["balloon_value"] >= 0)
-    assert len(game_log) > 0
-    assert min(game_log["balloon_value"]) >= 0
-    assert min(game_log["player_PnL"]) >= 0
-    assert min(game_log["player_unrPnL"]) >= 0
-
-@pytest.mark.game
-def test_game_summary():
-
-    def test_strategy(balloon):
-        if balloon.value < 2:
-            return "p"
-        else:
-            return "c"
-
-    testPlayer = Player(test_strategy, 1, 0, 0)
-    testGame = Game([testPlayer], 100, 3)
-    game_log = testGame.start()
-    testGame.print_summary(game_log)
-
 @pytest.mark.game
 def test_balloon_reset():
     balloon1 = Balloon("yellow", 3, True)
@@ -179,69 +208,6 @@ def test_balloon_reset():
     assert all(not balloon.popped for balloon in balloons)
     assert all(balloon.value == 0 for balloon in balloons)
 
-
-@pytest.mark.game
-def test_turn_loop():
-    def always_pump_strategy(balloon, memory=None):
-        return "p"
-
-    balloon1 = Balloon("yellow", 3, False)
-    balloon2 = Balloon("red", 2, False)
-    balloons = [balloon1, balloon2]
-
-    testPlayer = Player(always_pump_strategy, 1, 0, 0, None)
-    testGame = Game([testPlayer], 100, 3)
-
-    log, action = testGame.per_turn_game_loop(balloons[0], 6, 2, testPlayer)
-
-    assert log["balloon_value"] == 3
-    assert log["turn"] == 3
-    assert log["balloon_number"] == 7
-    assert action == "p"
-
-@pytest.mark.game
-def test_balloon_loop():
-    def always_pump_strategy(balloon, memory=None):
-        return "p"
-    def always_cash_strategy(balloon, memory=None):
-        return "c"
-    balloon1 = Balloon("yellow", 3, False)
-    balloon2 = Balloon("red", 2, False)
-    balloons = [balloon1, balloon2]
-
-    testPlayer = Player(always_pump_strategy, 1, 0, 0, None)
-    testPlayer2 = Player(always_cash_strategy, 2, 0, 0, None)
-    testGame = Game([testPlayer, testPlayer2], 100, 3)
-
-    initial_log = pd.DataFrame(columns=["turn", "balloon_number", "balloon_color", "balloon_value", "player_id", "player_action", "popped", "player_unrPnL", "player_PnL"])
-    initial_log2 = pd.DataFrame(columns=["turn", "balloon_number", "balloon_color", "balloon_value", "player_id", "player_action", "popped", "player_unrPnL", "player_PnL"])
-    game_log, current_turn = testGame.per_balloon_game_loop(balloons, 0, 0, testPlayer, initial_log)
-    game_log2, current_turn2 = testGame.per_balloon_game_loop(balloons, 1, 0, testPlayer2, initial_log2)
-    assert current_turn >= 1
-    assert current_turn == len(game_log)
-    assert len(game_log2) == 1
-    assert all([action == "c" for action in game_log2["player_action"]])
-"""
-"""
-@pytest.mark.sql
-def test_sql_init():
-    test_strat = Strategy("test_strat", 0, 0, "game_logs.db")
-    test_game = Game([test_strat], 100, 1, "game_logs.db")
-
-    df = pd.read_sql_query("SELECT * FROM game_1", test_game.conn)
-    # Make sure columns are correct
-    assert list(df.columns) == ["turn", 
-                        "balloon_number", 
-                        "balloon_color", 
-                        "balloon_value", 
-                        "strategy_name", 
-                        "player_action", 
-                        "popped", 
-                        "player_unrPnL", 
-                        "player_PnL"]
-    # Make sure there are no entries yet
-    assert len(df) == 0
-"""
 
 @pytest.mark.summary
 def test_summary():
@@ -271,15 +237,7 @@ def test_summary():
     conn.commit()
 
 
-@pytest.mark.full_game
-def test_game():
 
-    
-    test_strat = explore_then_exploit(0.25, 100, 3)
-    test_game = Game([test_strat], 100, 3)
-
-    test_game.start()
-    Game.print_summary(3)
 
     
     
