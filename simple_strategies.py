@@ -1,14 +1,15 @@
 from Classes import Balloon, Strategy
 import pandas as pd
 import numpy as np
-
+import sqlite3
+from config import DATABASE_PATH
 
 # Simple strategies for the balloon game
 
 # CONSTANT PUMP STRATEGY: Keep pumping the balloon until it reaches a value k
 class constant_pump(Strategy):
     def __init__(self, k: int):
-        super().__init__(name = "Constant_pump")
+        super().__init__(name = f"Constant_pump_{k}")
         self.k = k
 
     def action(self, balloon: Balloon) -> str:
@@ -19,11 +20,12 @@ class constant_pump(Strategy):
 
 
 class explore_then_exploit(Strategy):
-    def __init__(self, ratio: int, num_balloons: int, game_id: int) -> None:
-        super().__init__(name="Explore then Exploit")
+    def __init__(self, ratio: int, num_balloons: int, game_id: int, player_id: int) -> None:
+        super().__init__(name=f"explore_exploit_{player_id}")
         self.ratio = ratio
         self.num_balloons = num_balloons
         self.game_id = game_id
+        self.conn = sqlite3.Connection(DATABASE_PATH)
 
     def unseen_color_handling(self, balloon: Balloon) -> str:
         # essentially assume a popping probability = 1/2
@@ -33,8 +35,10 @@ class explore_then_exploit(Strategy):
     def num_pumps(self, color: str) -> float:
         
         cur = self.conn.cursor()
-        cur.execute(f"""SELECT balloon_color AS color, AVG(end_value) as average_lifespan 
-                    FROM (SELECT balloon_color, balloon_number, MAX(balloon_value-1) AS end_value FROM game_{self.game_id} WHERE balloon_color = ? GROUP BY balloon_number)""", (color,))
+        cur.execute(f"""SELECT * FROM (
+        SELECT balloon_color, AVG(end_value) FROM (
+        SELECT balloon_number, balloon_color, MAX(balloon_value) as end_value FROM (
+        SELECT * FROM (SELECT * from game_{self.game_id} WHERE strategy_name = ?) WHERE balloon_number <= 25) GROUP BY balloon_number) GROUP BY balloon_color) WHERE balloon_color = ?""", (self.name, color))
         row = cur.fetchone()
         return row[1]
         
@@ -45,7 +49,7 @@ class explore_then_exploit(Strategy):
         
         # Checks how many balloons we have seen
         cur = self.conn.cursor()
-        cur.execute(f"SELECT COUNT(DISTINCT balloon_number) from game_{self.game_id}")
+        cur.execute(f"SELECT COUNT(DISTINCT balloon_number) from game_{self.game_id} WHERE strategy_name = ?", (self.name,))
         db_size = cur.fetchone()[0]
         
         if db_size < self.num_balloons * self.ratio:

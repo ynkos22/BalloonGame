@@ -48,6 +48,8 @@ def test_initiation():
     cur.execute("DROP TABLE IF EXISTS game_1")
     conn.commit()
 
+    conn.close()
+
 # Tests if the innermost loop that runs at every turn works
 @pytest.mark.game
 def test_turn_loop():
@@ -133,6 +135,7 @@ def test_per_balloon_loop():
             assert cur.fetchone()[0] == 8
     # Reset the table
     Game.clear_game(1)
+    conn.close()
 
     
 @pytest.mark.game

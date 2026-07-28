@@ -4,7 +4,7 @@ import random
 from typing import List
 import pandas as pd
 import sqlite3
-from config import DATABASE_PATH, GAME_LOGS_CSV_FOLDER_PATH
+from config import DATABASE_PATH, GAME_LOGS_CSV_FOLDER_PATH, COLOR_MAP
 
 
 class Balloon:
@@ -22,12 +22,7 @@ class Balloon:
         if self.probability is not None:
             return self.probability
         color = self.color
-        color_prob_map = {
-            "yellow": 0.1,
-            "red": 0.3, 
-            "blue": 0.5,
-            "brown":0.8
-        }
+        color_prob_map = COLOR_MAP
         return color_prob_map[color]
 
     def inflate(self) -> None:
@@ -45,7 +40,6 @@ class Strategy:
         self.name = name
         self.unrPnL = 0
         self.PnL = 0
-        self.conn = sqlite3.connect(DATABASE_PATH)
 
     # Default action that all strategies will use if not specified otherwise
     def action(self, balloon: Balloon) -> str:
@@ -111,6 +105,7 @@ class Game:
 
         game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
         game_log.to_csv(GAME_LOGS_CSV_FOLDER_PATH + f"game_{game_id}_log", index = False)
+        conn.close()
 
     # Clears the table in SQL database corresponding to a particular game
     @staticmethod
@@ -119,6 +114,7 @@ class Game:
         cur = conn.cursor()
         cur.execute(f"DELETE FROM game_{game_id}")
         conn.commit()
+        conn.close()
 
     @staticmethod
     def clear_db():
