@@ -1,6 +1,6 @@
 
 import pytest
-from simple_strategies import explore_then_exploit, constant_pump
+from simple_strategies import explore_then_exploit, constant_pump, thompson_sampling
 from Classes import Balloon
 from Classes import Game
 import sqlite3
@@ -118,6 +118,114 @@ def test_num_pumps():
     Game.clear_game(1)
     conn.close()
 
+
+
+@pytest.mark.thompson
+def test_posterior():
+    Game.clear_game(1)
+    # Should return (num_of_failure + 1, num_successes + 1)
+
+    conn = sqlite3.Connection(DATABASE_PATH)
+    cur = conn.cursor()
+        
+    # Simple function that inserts entries
+    def insert_balloon(color: str, player_action: str, popped: int):
+        cur.execute('INSERT INTO game_1 VALUES (0, 0, ?, 0, "thompson_sampling", ?, ?, 0, 0)', (color, player_action, popped))
+
+    # TEST 1: check if it can handle pumps only
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 0)
+    insert_balloon("yellow", "p", 1)
+    insert_balloon("yellow", "p", 1)
+    insert_balloon("yellow", "p", 1)
+    insert_balloon("yellow", "p", 1)
+
+    expected_a_yellow = 5
+    expected_b_yellow = 7
+
+    insert_balloon("red", "p", 0)
+    insert_balloon("red", "p", 0)
+    insert_balloon("red", "p", 0)
+    insert_balloon("red", "p", 0)
+    insert_balloon("red", "p", 1)
+    insert_balloon("red", "p", 1)
+    insert_balloon("red", "p", 1)
+    insert_balloon("red", "p", 1)
+    insert_balloon("red", "p", 1)
+    insert_balloon("red", "p", 1)
+
+    expected_a_red = 7
+    expected_b_red = 5
+
+    conn.commit()
+
+    test_strat = thompson_sampling(1)
+    assert test_strat.posterior("yellow") == (expected_a_yellow, expected_b_yellow)
+    assert test_strat.posterior("red") == (expected_a_red, expected_b_red)
+
+
+    # TEST 2: check if it can handle cashing
+    insert_balloon("yellow", "c", 0)
+    insert_balloon("yellow", "c", 0)
+    insert_balloon("yellow", "c", 0)
+    insert_balloon("yellow", "c", 0)
+    insert_balloon("yellow", "c", 0)
+    insert_balloon("yellow", "c", 0)
+
+    insert_balloon("red", "c", 0)
+    insert_balloon("red", "c", 0)
+    insert_balloon("red", "c", 0)
+    insert_balloon("red", "c", 0)
+
+    conn.commit()
+
+    assert test_strat.posterior("yellow") == (expected_a_yellow, expected_b_yellow)
+    assert test_strat.posterior("red") == (expected_a_red, expected_b_red)
+
+
+    # TEST 3: check if it only looks at its own history
+
+    # Simple function that inserts entries for another strategy
+    def insert_balloon_alias(color: str, player_action: str, popped: int):
+        cur.execute('INSERT INTO game_1 VALUES (0, 0, ?, 0, "alias", ?, ?, 0, 0)', (color, player_action, popped))
+
+    insert_balloon_alias("yellow", "p", 0)
+    insert_balloon_alias("yellow", "p", 0)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+    insert_balloon_alias("yellow", "p", 1)
+
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 0)
+    insert_balloon_alias("red", "p", 1)
+    insert_balloon_alias("red", "p", 1)
+
+    conn.commit()
+
+    assert test_strat.posterior("yellow") == (expected_a_yellow, expected_b_yellow)
+    assert test_strat.posterior("red") == (expected_a_red, expected_b_red)
+
+    Game.clear_game(1)
+    conn.close()
+    
+
+@pytest.mark.thompson
+def 
 
 
     

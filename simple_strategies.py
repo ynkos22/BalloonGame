@@ -74,6 +74,37 @@ class explore_then_exploit(Strategy):
     
             
         
+class thompson_sampling(Strategy):
+    def __init__(self, game_id: int):
+        super().__init__(name="thompson_sampling")
+        self.game_id = game_id
+
+    # Given a color, this function outputs the beta posterior parameters (a, b)
+    # a: number of unsuccessful pumps
+    # b: number of successful pumps
+    def posterior(self, color: str) -> tuple[int, int]:
+        pass
+
+    # Given Beta posterior parameters, this function samples a probability p from this distribution
+    def thompson_sampler(self, a: int, b: int) -> float:
+        pass
+
+    # Given balloon is at value v, and our estimated probability is p
+    # this function returns "p" for pump and "c" for cash
+    def decision_rule(self, v: int, p: float) -> str:
+        pass
+
+    def action(self, balloon: Balloon) -> str:
+
+        color = balloon.color
+        value = balloon.value
+        posterior = self.posterior(color)
+        beta_a = posterior[0]
+        beta_b = posterior[1]
+
+        p_estimate = self.thompson_sampler(beta_a, beta_b)
+
+        return self.decision_rule(value, p_estimate)
 
 
 
