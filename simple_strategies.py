@@ -71,8 +71,6 @@ class explore_then_exploit(Strategy):
                     return "c"
     
 
-    
-            
         
 class thompson_sampling(Strategy):
     def __init__(self, game_id: int):
@@ -80,19 +78,33 @@ class thompson_sampling(Strategy):
         self.game_id = game_id
 
     # Given a color, this function outputs the beta posterior parameters (a, b)
-    # a: number of unsuccessful pumps
-    # b: number of successful pumps
+    # a: number of unsuccessful pumps + 1
+    # b: number of successful pumps + 1
     def posterior(self, color: str) -> tuple[int, int]:
-        pass
+        conn = sqlite3.Connection(DATABASE_PATH)
+        cur = conn.cursor()
+        cur.execute(f"""SELECT COALESCE(SUM(popped), 0) + 1 as a, COALESCE(SUM(1-popped), 0) + 1 as b FROM (
+                        SELECT * FROM (
+                        SELECT * FROM (SELECT balloon_color, player_action, popped from game_{self.game_id} WHERE strategy_name = "thompson_sampling") 
+                        WHERE player_action = "p") 
+                        WHERE balloon_color = ?)""", (color,))
+        row = cur.fetchone()
+        a = row[0]
+        b = row[1]
+        return (a, b)
 
     # Given Beta posterior parameters, this function samples a probability p from this distribution
     def thompson_sampler(self, a: int, b: int) -> float:
-        pass
+        sample = np.random.beta(a, b)
+        return sample
 
     # Given balloon is at value v, and our estimated probability is p
     # this function returns "p" for pump and "c" for cash
     def decision_rule(self, v: int, p: float) -> str:
-        pass
+        if v < (1-p)/p:
+            return "p"
+        else:
+            return "c"
 
     def action(self, balloon: Balloon) -> str:
 

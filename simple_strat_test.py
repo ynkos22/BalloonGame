@@ -225,7 +225,24 @@ def test_posterior():
     
 
 @pytest.mark.thompson
-def 
+def test_sampling():
+    test_strat = thompson_sampling(1)
+
+    # TEST 0: check type
+    assert type(test_strat.thompson_sampler(1, 3)) == float
+
+
+    # TEST 1: check if it is a valid probability 
+
+    assert test_strat.thompson_sampler(1, 1) < 1 and test_strat.thompson_sampler(1, 1) > 0
+    assert test_strat.thompson_sampler(1, 3) < 1 and test_strat.thompson_sampler(1, 3) > 0
+    assert test_strat.thompson_sampler(1, 5) < 1 and test_strat.thompson_sampler(1, 5) > 0
+    assert test_strat.thompson_sampler(2, 3) < 1 and test_strat.thompson_sampler(2, 3) > 0
+    assert test_strat.thompson_sampler(2, 4) < 1 and test_strat.thompson_sampler(2, 4) > 0
+    assert test_strat.thompson_sampler(3, 3) < 1 and test_strat.thompson_sampler(3, 3) > 0
+
+
+    
 
 
     
