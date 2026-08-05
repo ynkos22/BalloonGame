@@ -38,7 +38,7 @@ class explore_then_exploit(Strategy):
         cur.execute(f"""SELECT * FROM (
         SELECT balloon_color, AVG(end_value) FROM (
         SELECT balloon_number, balloon_color, MAX(balloon_value) as end_value FROM (
-        SELECT * FROM (SELECT * from game_{self.game_id} WHERE strategy_name = ?) WHERE balloon_number <= 25) GROUP BY balloon_number) GROUP BY balloon_color) WHERE balloon_color = ?""", (self.name, color))
+        SELECT * FROM (SELECT * from game_{self.game_id} WHERE strategy_name = ?) WHERE balloon_number <= ?) GROUP BY balloon_number) GROUP BY balloon_color) WHERE balloon_color = ?""", (self.name, self.num_balloons, color))
         row = cur.fetchone()
         return row[1]
         
@@ -89,6 +89,7 @@ class thompson_sampling(Strategy):
                         WHERE player_action = "p") 
                         WHERE balloon_color = ?)""", (color,))
         row = cur.fetchone()
+        conn.close()
         a = row[0]
         b = row[1]
         return (a, b)

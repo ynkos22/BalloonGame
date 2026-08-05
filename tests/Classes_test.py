@@ -1,3 +1,8 @@
+
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pandas as pd
 from Classes import Balloon, Strategy, Game
 import pytest
@@ -5,7 +10,6 @@ from IPython.display import display
 import sqlite3
 from config import DATABASE_PATH, GAME_LOGS_CSV_FOLDER_PATH
 from simple_strategies import explore_then_exploit, constant_pump
-import os
 
 
 @pytest.mark.balloon
