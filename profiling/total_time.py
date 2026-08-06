@@ -23,7 +23,6 @@ def main() -> list:
     
     wall_times, cpu_times = [], []
     for i in range(TRIALS):
-        result = {}
         w_time, cpu_time = time.perf_counter(), time.process_time()
         run_game(tag="total_time", num_balloons=NUMBER_BALLOONS)
         w = time.perf_counter() - w_time
@@ -33,12 +32,14 @@ def main() -> list:
 
         # Saves the record
         sha = get_commit()
-        result["commit"] = sha
-        result["script"] = "total_time"
-        result["trial"] = i
-        result["wall_time"] = w
-        result["cpu_time"] = cpu
-        result["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+        result = {
+        "commit": sha,
+        "script": "total_time",
+        "trial": i,
+        "wall_time": w,
+        "cpu_time": cpu,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+        }
         
         append_record(result)
 

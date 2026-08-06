@@ -31,10 +31,11 @@ def save_profiler(profiler: cProfile.Profile, num_balloons: int) -> None:
     profiler.dump_stats(prof_path)
 
     # logs into jsonl
-    record = { "script": "profiling",
-                    "commit": sha,
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
-                    "prof_file": os.path.basename(prof_path)
+    record = { 
+        "commit": sha,
+        "script": "profiling",
+        "prof_file": os.path.basename(prof_path),
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     append_record(record)
     

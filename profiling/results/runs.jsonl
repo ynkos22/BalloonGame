@@ -1,0 +1,8 @@
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "total_time", "trial": 0, "wall_time": 3.4734380000736564, "cpu_time": 1.890625, "date": "2026-08-06 01:22:38"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "total_time", "trial": 1, "wall_time": 3.542228600010276, "cpu_time": 2.03125, "date": "2026-08-06 01:22:42"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "total_time", "trial": 2, "wall_time": 3.1841210001148283, "cpu_time": 1.71875, "date": "2026-08-06 01:22:45"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "profiling", "prof_file": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe_150.prof", "date": "2026-08-06 01:23:03"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "scaling", "n_size": 50, "wall_time": 1.2350743000861257, "ms_per_turn": 2.5154262730878325, "date": "2026-08-06 01:23:17"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "scaling", "n_size": 100, "wall_time": 2.3438203998375684, "ms_per_turn": 2.164192428289537, "date": "2026-08-06 01:23:20"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "scaling", "n_size": 200, "wall_time": 5.262789099942893, "ms_per_turn": 2.4523714352017207, "date": "2026-08-06 01:23:25"}
+{"commit": "f5cfedca8e77ad7c2b2823c0df0699be8a2adfbe", "script": "scaling", "n_size": 400, "wall_time": 10.190721800085157, "ms_per_turn": 2.631901291344307, "date": "2026-08-06 01:23:35"}
