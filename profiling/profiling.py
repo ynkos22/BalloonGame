@@ -10,6 +10,7 @@ NOTE: profiling modules take time so only trust the relative times between funct
 import cProfile
 import pstats
 from harness import run_game
+from record_harness import save_profiler
 
 NUM_BALLOONS = 150
 
@@ -18,6 +19,8 @@ def main():
     profiler.enable()
     run_game(tag="profiling", num_balloons=NUM_BALLOONS)
     profiler.disable()
+    save_profiler(profiler, NUM_BALLOONS)
+
 
     stats = pstats.Stats(profiler)
     stats.strip_dirs()

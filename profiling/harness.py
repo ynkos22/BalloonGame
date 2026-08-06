@@ -32,6 +32,9 @@ def fresh_db(tag: str = "default") -> str:
     Classes.DATABASE_PATH = path
     simple_strategies.DATABASE_PATH = path
 
+    if os.path.exists(path):
+        os.remove(path)
+
     return path
 
 

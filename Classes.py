@@ -97,6 +97,7 @@ class Game:
             self.per_player_game_loop(balloons, player)
             if hasattr(player, "conn"):
                 player.conn.close()
+        self.conn.close()
 
 
     # Converts relavant part of database into csv doc

@@ -57,7 +57,7 @@ class explore_then_exploit(Strategy):
             return "p" 
         else:
             # Exploitation phase
-            cur.execute(f"SELECT DISTINCT balloon_color from game_{self.game_id}")
+            cur.execute(f"SELECT DISTINCT balloon_color from game_{self.game_id} WHERE strategy_name = ?", (self.name,))
             seen_colors_tuples = cur.fetchall()
             seen_colors = [tuple[0] for tuple in seen_colors_tuples]
             if balloon.color not in seen_colors:
