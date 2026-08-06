@@ -9,3 +9,5 @@ SUGGESTED FIXES (no particular order):
 7. Nested SQL queries
 8. SEEDED balloons 
 9. Explore then exploit ID (a bit weird way to do it maybe should use the ratio)
+10. Explore then exploit bug: if popping probabilities are extremely high, it averages round down to 0 so never pumps pnl stays 0
+11. If a new game is initiated on an existing table, should empty that first

@@ -2,7 +2,7 @@ from Classes import Balloon, Strategy
 import pandas as pd
 import numpy as np
 import sqlite3
-from config import DATABASE_PATH
+from config import DATABASE_PATH, COLOR_MAP
 
 # Simple strategies for the balloon game
 
@@ -38,7 +38,7 @@ class explore_then_exploit(Strategy):
         cur.execute(f"""SELECT * FROM (
         SELECT balloon_color, AVG(end_value) FROM (
         SELECT balloon_number, balloon_color, MAX(balloon_value) as end_value FROM (
-        SELECT * FROM (SELECT * from game_{self.game_id} WHERE strategy_name = ?) WHERE balloon_number <= ?) GROUP BY balloon_number) GROUP BY balloon_color) WHERE balloon_color = ?""", (self.name, self.num_balloons, color))
+        SELECT * FROM (SELECT * from game_{self.game_id} WHERE strategy_name = ?) WHERE balloon_number <= ?) GROUP BY balloon_number) GROUP BY balloon_color) WHERE balloon_color = ?""", (self.name, int(self.num_balloons * self.ratio), color))
         row = cur.fetchone()
         return row[1]
         
@@ -65,7 +65,7 @@ class explore_then_exploit(Strategy):
                 return self.unseen_color_handling(balloon)
             else: 
                 average_lifespan = self.num_pumps(balloon.color) # Note: this is a float
-                if balloon.value < np.floor(average_lifespan):
+                if balloon.value < average_lifespan:
                     return "p"
                 else:
                     return "c"
@@ -120,8 +120,27 @@ class thompson_sampling(Strategy):
         return self.decision_rule(value, p_estimate)
 
 
+# This is the baseline/benchmark strategy that KNOWS the probbailities
+class benchmark(Strategy):
+    def __init__(self):
+        super().__init__(name = "benchmark")
+
+
+    def action(self, balloon: Balloon):
+        color = balloon.color
+        p = COLOR_MAP[color]
+        v = balloon.value
+
+        if v < (1-p)/p:
+            return "p"
+        else:
+            return "c"
+
+
 
 
     
+
+
 
     
