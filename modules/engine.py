@@ -2,7 +2,7 @@
 from strategies import Strategy
 from sql_handling import SQL_handling
 from core import Balloon, Observation
-
+import numpy as np
 
 
 
@@ -12,11 +12,51 @@ class Game:
         self.strategies = strategies
         self.seed = seed
         self.game_id = game_id
-        self.num_balloons
+        self.num_balloons = num_balloons
+        self.balloon_rng, self.tiebreak_rng = np.random.default_rng(seed).spawn(2)
 
     # Returns a dictionary with player names and their respective payouts
+    # This function is a bit long just covering all the cases of the rules of payout
     def calc_payout(self, thresholds: dict, balloon: Balloon) -> dict:
-        pass
+        pop_val = balloon.pop_value
+        if len(thresholds) == 1:
+            # Single-player
+            strategy_name = list(thresholds.keys())[0]
+            if thresholds[strategy_name] < pop_val and thresholds[strategy_name] >= 0:
+                payout = {strategy_name: thresholds[strategy_name]}
+            else:
+                payout = {strategy_name: 0}
+            return payout
+
+        elif len(thresholds) == 2:
+            # Multiplayer
+            strategy_name_1, strategy_name_2 = thresholds.keys()
+            threshold_1, threshold_2 = thresholds[strategy_name_1], thresholds[strategy_name_2]
+
+            if threshold_1 >= pop_val:
+                if threshold_2 >= pop_val: # both popped
+                    payout = {strategy_name_1: 0, 
+                              strategy_name_2: 0}
+                else: # 1 popped, 2 didn't
+                    payout = {strategy_name_1: 0, 
+                            strategy_name_2: threshold_2}
+            else: # 1 didn't pop
+                if threshold_2 >= pop_val: # 1 didn't pop 2 did
+                    payout = {strategy_name_1: threshold_1, 
+                                strategy_name_2: 0}
+                else: # neither popped
+                    if threshold_1 == threshold_2:
+                        if self.tiebreak_rng.random() < 0.5:
+                            payout = {strategy_name_1: threshold_1 + threshold_2, strategy_name_2: 0}
+                        else:
+                            payout = {strategy_name_1: 0, strategy_name_2: threshold_1 + threshold_2}
+                    else:
+                        payout = {strategy_name_1: (threshold_1 + threshold_2)*int(threshold_1>threshold_2), 
+                                strategy_name_2: (threshold_1 + threshold_2)*int(threshold_1<threshold_2)}
+            return payout
+        else:
+            return {}
+    
 
     # Updates players' PnL according payouts
     # Returns updated PnL in dictionary (keys are strategy names)

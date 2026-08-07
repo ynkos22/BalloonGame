@@ -16,7 +16,7 @@ COLORMAP = {} # Fix the config file later
 test_balloon = Balloon("red", 5, 0.2, 45)
 test_strat1 = Strategy("test_strat1", 0)
 test_strat2 = Strategy("test_strat2", 0)
-test_game = Game([test_strat1], 1001, 1)
+test_game = Game([test_strat1], 1001, 1, 100)
 
 @pytest.mark.engine
 def test_calc_payout():
@@ -68,9 +68,9 @@ def test_calc_payout():
                 test_strat2.name: threshold_2
             }
     
-    assert test_game.calc_payout(thresholds, test_balloon) == {test_strat1.name: 5, 
+    assert test_game.calc_payout(thresholds, test_balloon) == {test_strat1.name: 6, 
                                                                 test_strat2.name: 0} or test_game.calc_payout(thresholds, test_balloon) == {test_strat1.name: 0, 
-                                                                test_strat2.name: 5}
+                                                                test_strat2.name: 6}
     # Test if someone someone's threshold is EXACTLY pop_value
     threshold_1 = 5
     threshold_2 = 3
