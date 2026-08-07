@@ -6,9 +6,10 @@ class SQL_handling:
         pass
 
 
-    # Inserts a new row into SQL table
+    # Inserts new rows into SQL table
+
     @staticmethod
-    def sql_insert(sql_tup: tuple) -> None:
+    def sql_insert(sql_tup: dict[str, tuple]) -> None:
         pass
 
     # Clears the SQL table corresponding to game_id
