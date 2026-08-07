@@ -16,7 +16,7 @@ COLORMAP = {} # Fix the config file later
 test_balloon = Balloon("red", 5, 0.2, 45)
 test_strat1 = Strategy("test_strat1", 0)
 test_strat2 = Strategy("test_strat2", 0)
-test_game = Game([test_strat1], 1001, 1, 100)
+test_game = Game([test_strat1, test_strat2], 1001, 1, 100)
 
 @pytest.mark.engine
 def test_calc_payout():
@@ -111,7 +111,7 @@ def test_update_PnL():
     # Test what happens if payout and strategies don't match (should be automatically set to 0)
     payout = {test_strat1.name: 10}
     PnL_dict = test_game.update_PnL([test_strat1, test_strat2], payout)
-    assert PnL_dict[test_strat2.name] == 0
+    assert PnL_dict == {test_strat1.name: 10, test_strat2.name: 0}
 
 
     test_strat1.PnL = 0
@@ -121,7 +121,7 @@ def test_update_PnL():
     payout = {test_strat1.name: 10, 
               test_strat2.name: 20}
     PnL_dict = test_game.update_PnL([test_strat1], payout)
-    assert PnL_dict[test_strat2.name] == 0 and PnL_dict[test_strat1.name] == 10
+    assert PnL_dict[test_strat1.name] == 10
 
     test_strat1.PnL = 0
     test_strat2.PnL = 0

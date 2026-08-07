@@ -61,12 +61,23 @@ class Game:
     # Updates players' PnL according payouts
     # Returns updated PnL in dictionary (keys are strategy names)
     def update_PnL(self, strategies: list[Strategy], payout:dict) -> dict[str, int]:
-        pass
+        PnL_dict = {}
+        for strategy in strategies:
+            if strategy.name in payout:
+                strategy.PnL += payout[strategy.name]
+                PnL_dict[strategy.name] = strategy.PnL
+            else:
+                PnL_dict[strategy.name] = strategy.PnL
 
+        return PnL_dict
+    
     # Returns an dictionary with names and Observation objects
     # used in resolve_round before returning Observation object
     def obs_parser(self, thresholds: dict, payout: dict, color: str) -> dict[str, Observation]:
-        pass
+        obs_dict = {}
+        for strat in self.strategies:
+            obs_dict[strat.name] = Observation(payout, thresholds[strat.name], color)
+        return obs_dict
 
 
     # Returns a dictionary with names with tuples ready to be inserted into SQL table
