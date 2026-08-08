@@ -8,7 +8,7 @@ import sqlite3
 from config import DATABASE_PATH, GAME_LOG_PATH
 import pandas as pd
 import os
-
+"""
 seed = 102301
 num_balloons = 1000
 def convert_csv(folder_path: str, game_id: int, conn: sqlite3.Connection) -> None:
@@ -21,11 +21,14 @@ test_strat3 = explore_exploit(0.1, num_balloons)
 test_strat4 = oracle()
 
 
-
 test_game_1 = Game([test_strat1], seed, 1, num_balloons)
 test_game_2 = Game([test_strat2], seed, 2, num_balloons)
 test_game_3 = Game([test_strat3], seed, 3, num_balloons)
 test_game_4 = Game([test_strat4], seed, 4, num_balloons)
+
+
+
+test_game_5 = Game([test_strat3, test_strat1], seed, 5, num_balloons)
 
 
 test_game_1.main()
@@ -33,13 +36,20 @@ test_game_2.main()
 test_game_3.main()
 test_game_4.main()
 
+test_strat1.PnL = 0
+test_strat2.PnL = 0
+test_strat3.PnL = 0
+test_strat4.PnL = 0
+test_game_5.main()
+
 conn = sqlite3.Connection(DATABASE_PATH)
 convert_csv(GAME_LOG_PATH, 1, conn)
 convert_csv(GAME_LOG_PATH, 2, conn)
 convert_csv(GAME_LOG_PATH, 3, conn)
 convert_csv(GAME_LOG_PATH, 4, conn)
+convert_csv(GAME_LOG_PATH, 5, conn)
 
-
+"""
 
 import matplotlib.pyplot as plt
 
@@ -53,7 +63,21 @@ y1 = df_benchmark["end_PnL"] - df_constant_pump["end_PnL"]
 y2 =  df_benchmark["end_PnL"] - df_explore_exploit["end_PnL"]
 y3 = df_benchmark["end_PnL"] - df_thompson["end_PnL"]
 
+df_duel = pd.read_csv(os.path.join(GAME_LOG_PATH, "game_5_log.csv"))
+df_x = df_duel[df_duel["strategy_name"] == "explore_exploit_0.1"]
+df_t = df_duel[df_duel["strategy_name"] == "thompson_sampling"]
 
+y4 = df_x["end_PnL"]
+y5 = df_t["end_PnL"]
+
+plt.plot(x, y4, label = "explore_exploit", color = "blue")
+plt.plot(x, y5, label = "thompson", color = "red")
+
+plt.xlabel("balloon_number")
+plt.ylabel("PnL")
+plt.legend()
+
+"""
 plt.plot(x, y1, label = "constant_pump", color = "blue")
 plt.plot(x, y2, label = "explore_exploit", color = "red")
 plt.plot(x, y3, label = "thompson_sampling", color = "orange")
@@ -61,7 +85,7 @@ plt.plot(x, y3, label = "thompson_sampling", color = "orange")
 plt.xlabel("balloon_number")
 plt.ylabel("Regret")
 plt.legend()
-
+"""
 
 plt.show()
 
