@@ -63,20 +63,22 @@ class Game:
     def update_PnL(self, strategies: list[Strategy], payout:dict) -> dict[str, int]:
         PnL_dict = {}
         for strategy in strategies:
-            if strategy.name in payout:
-                strategy.PnL += payout[strategy.name]
-                PnL_dict[strategy.name] = strategy.PnL
-            else:
-                PnL_dict[strategy.name] = strategy.PnL
+            strategy.PnL += payout.get(strategy.name, 0)
+            PnL_dict[strategy.name] = strategy.PnL
+
 
         return PnL_dict
     
     # Returns an dictionary with names and Observation objects
     # used in resolve_round before returning Observation object
-    def obs_parser(self, thresholds: dict, payout: dict, color: str) -> dict[str, Observation]:
+    def obs_parser(self, thresholds: dict, payout: int, balloon: Balloon) -> dict[str, Observation]:
         obs_dict = {}
+        color = balloon.color
         for strat in self.strategies:
-            obs_dict[strat.name] = Observation(payout, thresholds[strat.name], color)
+            if thresholds[strat.name] >= balloon.pop_value:
+                obs_dict[strat.name] = Observation(payout, thresholds[strat.name], color, balloon.pop_value)
+            else:
+                obs_dict[strat.name] = Observation(payout, thresholds[strat.name], color)
         return obs_dict
 
 
@@ -117,7 +119,8 @@ class Game:
         PnL_dict = self.update_PnL(self.strategies, payout)
 
         sql_list = self.sql_parser(thresholds, balloon, PnL_dict)
-        obs_dict = self.obs_parser(thresholds, payout, balloon.color)
+
+        obs_dict = self.obs_parser(thresholds, payout, balloon)
 
         return (obs_dict, sql_list)
 
@@ -130,22 +133,23 @@ class Game:
         conn = sqlite3.Connection(DATABASE_PATH)
         SQL_handler = SQL_handling(conn, self.game_id)
 
-        for balloon in balloons:
-            thresholds = {}
-            for strategy in strategies:
-                # insert strategy decisions into thresholds
-                thresholds[strategy.name] = strategy.action(balloon)
-            obs_dict, sql_list = self.resolve_round(thresholds, balloon)
+        try:
+            for balloon in balloons:
+                thresholds = {}
+                for strategy in strategies:
+                    # insert strategy decisions into thresholds
+                    thresholds[strategy.name] = strategy.action(balloon)
+                obs_dict, sql_list = self.resolve_round(thresholds, balloon)
 
-            # Update strategy beliefs
-            for strategy in strategies:
-                strategy.update_beliefs(obs_dict[strategy.name])
+                # Update strategy beliefs
+                for strategy in strategies:
+                    strategy.update_beliefs(obs_dict[strategy.name])
 
-            # record into SQL table
-            SQL_handler.sql_insert(sql_list) #NOTE: not ONE tuple but a list of tuples
-
-        conn.commit()
-        conn.close()
+                # record into SQL table
+                SQL_handler.sql_insert(sql_list) #NOTE: not ONE tuple but a list of tuples
+        finally:
+            conn.commit()
+            conn.close()
 
     # Main loop that runs once per game
     def main(self):

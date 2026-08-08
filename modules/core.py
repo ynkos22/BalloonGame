@@ -13,8 +13,9 @@ class Balloon:
         
 
 class Observation:
-    def __init__(self, payout: dict, own_threshold: int, balloon_color: str):
-        self.payout = payout
+    def __init__(self, payout: dict, own_threshold: int, balloon_color: str, pop_time=999):
+        self.payout = payout.copy()
         self.own_threshold = own_threshold
         self.balloon_color = balloon_color
+        self.pop_time = pop_time # if it didn't pop default == 999
         
