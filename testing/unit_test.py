@@ -7,9 +7,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from core import Balloon, Observation
 from engine import Game
 from strategies import Strategy
+from config import COLOR_MAP
 
 
-COLORMAP = {} # Fix the config file later
 
 # TESTS FOR ENGINE
 
@@ -169,8 +169,8 @@ def test_sql_parser():
             test_strat2.name: 202
     }
     result = test_game.sql_parser(thresholds, test_balloon, PnL_dict)
-    assert result[test_strat1.name] == (45, "red", 5, test_strat1.name, 3, 100)
-    assert result[test_strat2.name] == (45, "red", 5, test_strat2.name, 4, 202)
+    assert (45, "red", 5, test_strat1.name, 3, 100) in result
+    assert (45, "red", 5, test_strat2.name, 4, 202) in result
     
 
 @pytest.mark.engine
@@ -187,15 +187,17 @@ def test_initialization():
     # Test if different seeds generate different balloons
     game_3 = Game([test_strat1, test_strat2], 102, 3, 100)
     game_4 = Game([test_strat1, test_strat2], 103, 4, 100)
-    assert len(game_3) == len(game_4)
-    booleans = [game_3[i] == game_4[i] for i in range(len(game_3))]
+    balloon_list_3 = game_3.initialization()
+    balloon_list_4 = game_4.initialization()
+    assert len(balloon_list_3) == len(balloon_list_4)
+    booleans = [balloon_list_3[i] == balloon_list_4[i] for i in range(len(balloon_list_3))]
     assert all(booleans) == False
 
     # Test if balloon id are correct 
     # Test if probabilities are correct
     for i in range(len(balloon_list_1)):
         assert balloon_list_1[i].id == i
-        assert balloon_list_1[i].prob == COLORMAP[balloon_list_1[i].color]
+        assert balloon_list_1[i].prob == COLOR_MAP[balloon_list_1[i].color]
         assert balloon_list_1[i].pop_value >= 0
 
     # Test length of balloon list
@@ -212,13 +214,13 @@ def test_resolve_round():
             test_strat2.name: threshold_2
         }
     result = test_game.resolve_round(thresholds, test_balloon)
+    assert isinstance(result[0], dict) and isinstance(result[1], list)
     for value in result[0].values():
         assert isinstance(value, Observation)
-    for value in result[1].values():
+    for value in result[1]:
         assert isinstance(value, tuple)
         assert len(value) == 6
-    for item in result:
-        assert isinstance(item, dict)
+    
 
 
 # TESTS FOR STRATEGIES
