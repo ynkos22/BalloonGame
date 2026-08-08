@@ -8,46 +8,40 @@ import sqlite3
 from config import DATABASE_PATH, GAME_LOG_PATH
 import pandas as pd
 import os
-"""
-seed = 102301
-num_balloons = 1000
+from strategies import Strategy
+
+
 def convert_csv(folder_path: str, game_id: int, conn: sqlite3.Connection) -> None:
     game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
     game_log.to_csv(os.path.join(folder_path, f"game_{game_id}_log.csv"), index = False)
+
+def run_games(strategies: list[Strategy], seed: int, num_balloons: int, start_game_id: int):
+    for i in range(start_game_id, start_game_id + len(strategies)):
+        game = Game([strategies[i-start_game_id]], seed, i, num_balloons)
+        game.main()
+        strategies[i-start_game_id].PnL = 0
+
+    # Convert to csv
+    conn = sqlite3.Connection(DATABASE_PATH)
+    for i in range(start_game_id, start_game_id + len(strategies)):
+        convert_csv(GAME_LOG_PATH, i, conn)
+    conn.commit()
+    conn.close()
+
+
+
+seed = 102301
+num_balloons = 1000
 
 test_strat1 = thompson_sampling()
 test_strat2 = constant_pump(3)
 test_strat3 = explore_exploit(0.1, num_balloons)
 test_strat4 = oracle()
 
-
-test_game_1 = Game([test_strat1], seed, 1, num_balloons)
-test_game_2 = Game([test_strat2], seed, 2, num_balloons)
-test_game_3 = Game([test_strat3], seed, 3, num_balloons)
-test_game_4 = Game([test_strat4], seed, 4, num_balloons)
+strats = [test_strat1, test_strat2, test_strat3, test_strat4]
 
 
-
-test_game_5 = Game([test_strat3, test_strat1], seed, 5, num_balloons)
-
-
-test_game_1.main()
-test_game_2.main()
-test_game_3.main()
-test_game_4.main()
-
-test_strat1.PnL = 0
-test_strat2.PnL = 0
-test_strat3.PnL = 0
-test_strat4.PnL = 0
-test_game_5.main()
-
-conn = sqlite3.Connection(DATABASE_PATH)
-convert_csv(GAME_LOG_PATH, 1, conn)
-convert_csv(GAME_LOG_PATH, 2, conn)
-convert_csv(GAME_LOG_PATH, 3, conn)
-convert_csv(GAME_LOG_PATH, 4, conn)
-convert_csv(GAME_LOG_PATH, 5, conn)
+run_games(strats, seed, num_balloons, 6)
 
 """
 
@@ -77,7 +71,7 @@ plt.xlabel("balloon_number")
 plt.ylabel("PnL")
 plt.legend()
 
-"""
+
 plt.plot(x, y1, label = "constant_pump", color = "blue")
 plt.plot(x, y2, label = "explore_exploit", color = "red")
 plt.plot(x, y3, label = "thompson_sampling", color = "orange")
@@ -85,8 +79,8 @@ plt.plot(x, y3, label = "thompson_sampling", color = "orange")
 plt.xlabel("balloon_number")
 plt.ylabel("Regret")
 plt.legend()
-"""
+
 
 plt.show()
 
-
+"""

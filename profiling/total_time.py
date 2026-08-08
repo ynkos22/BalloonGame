@@ -57,9 +57,6 @@ def main() -> list:
     print(f"waiting time = {waiting_time: 6.2f} ({100*waiting_time/best_wtime: 6.2f} % of total)")
 
     
-    
-
-
 
 
 
