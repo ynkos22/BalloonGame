@@ -221,8 +221,6 @@ def test_resolve_round():
         assert isinstance(value, tuple)
         assert len(value) == 6
     
-
-
 # TESTS FOR STRATEGIES
 
 @pytest.mark.strategies
@@ -232,3 +230,43 @@ def test_action():
 @pytest.mark.strategies
 def test_update_beliefs():
     pass
+
+# TESTS FOR CONFIG / PLOTTING TOOLS
+
+@pytest.mark.data_gen
+def test_valid_game_input():
+    pass
+
+
+@pytest.mark.data_gen
+def test_get_strat_obj():
+    pass
+
+
+@pytest.mark.data_gen
+def test_get_strat_list():
+    pass
+
+
+@pytest.mark.data_gen
+def test_yaml_parser():
+    pass
+
+
+@pytest.mark.data_gen
+def test_build_game():
+    pass
+
+@pytest.mark.data_gen
+def test_run_game():
+    pass
+
+@pytest.mark.data_gen
+def test_round_robin():
+    pass
+
+@pytest.mark.data_gen
+def test_expected_payout():
+    pass
+
+
