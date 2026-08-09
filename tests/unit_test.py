@@ -145,7 +145,7 @@ def test_obs_parser():
         test_strat1.name: 3,
         test_strat2.name: 4
     }
-    result = test_game.obs_parser(thresholds, payout, "red")
+    result = test_game.obs_parser(thresholds, payout, test_balloon)
 
     obs1 = result[test_strat1.name]
     obs2 = result[test_strat2.name]
