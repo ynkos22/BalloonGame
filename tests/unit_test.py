@@ -14,8 +14,8 @@ from config import COLOR_MAP
 # TESTS FOR ENGINE
 
 test_balloon = Balloon("red", 5, 0.2, 45)
-test_strat1 = Strategy("test_strat1", 0)
-test_strat2 = Strategy("test_strat2", 0)
+test_strat1 = Strategy("test_strat1")
+test_strat2 = Strategy("test_strat2")
 test_game = Game([test_strat1, test_strat2], 1001, 1, 100)
 
 @pytest.mark.engine

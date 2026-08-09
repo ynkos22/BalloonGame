@@ -18,4 +18,8 @@ class Observation:
         self.own_threshold = own_threshold
         self.balloon_color = balloon_color
         self.pop_time = pop_time # if it didn't pop default == 999
+
+
+
+
         

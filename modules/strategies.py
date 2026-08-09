@@ -23,46 +23,21 @@ class Strategy:
     def update_beliefs(self, obs: Observation) -> None:
         pass
 
-    # Infers how many successful and unsuccesful pumps from payout and own_threshold
+    # Infers how many successful and unsuccesful pumps from own_threshold and pop_val
+    # The opponent's payout is deliberately ignored: it only reveals how deep the balloon
+    # went when the opponent SURVIVED, so using it would censor at an outcome-dependent
+    # depth and bias the pop-probability estimate downwards.
     # returns np.array([num_suc, num_fail])
-    def payout_infer(self, payout: dict[str, int], own_threshold: int, pop_val: int) -> np.array:
+    def payout_infer(self, own_threshold: int, pop_val: int) -> np.array:
         result_list = [0, 0]
-
-        if len(payout) == 1:
-            # Single player
-            if pop_val == 999:
-                # we didn't pop
-                result_list[0] += own_threshold
-            else:
-                # we popped
-                result_list[0] += max(pop_val - 1, 0)
-                result_list[1] += 1
-                
-        elif len(payout) == 2:
-            # multiplayer
-            
-            my_payout = payout[self.name]
-            payout.pop(self.name)
-            opp_payout = payout[list(payout.keys())[0]]
-            
-            if my_payout == own_threshold:
-                # opponent popped -> balloon survived own_threshold pumps
-                result_list[0] += own_threshold
-
-            elif my_payout > own_threshold:
-                # opponent lower or equal -> balloon survived own_threshold pumps
-                result_list[0] += own_threshold
-
-            elif my_payout == 0:
-                # we popped or opponent closer to edge
-                if pop_val == 999: # we didn't pop
-                    # opponent is closer to edge and didn't pop
-                    result_list[0] += opp_payout - own_threshold
-                else: # we popped
-                    result_list[0] += max(pop_val - 1, 0)
-                    result_list[1] += 1
-
+        if pop_val == 999:
+            result_list[0] += own_threshold
+        else:
+            result_list[0] += max(pop_val-1, 0)
+            result_list[1] += 1
         return np.array(result_list)
+
+        
 
 class constant_pump(Strategy):
     def __init__(self, pump_times: int):
@@ -92,7 +67,7 @@ class explore_exploit(Strategy):
 
     def update_beliefs(self, obs: Observation):
 
-        succ_fail_vector = self.payout_infer(obs.payout, obs.own_threshold, obs.pop_time)
+        succ_fail_vector = self.payout_infer(obs.own_threshold, obs.pop_time)
 
         # Update self.memory
         self.memory[obs.balloon_color] += succ_fail_vector
@@ -113,7 +88,7 @@ class thompson_sampling(Strategy):
         return self.belief_state[balloon.color]
 
     def update_beliefs(self, obs: Observation):
-        succ_fail_vector = self.payout_infer(obs.payout, obs.own_threshold, obs.pop_time)
+        succ_fail_vector = self.payout_infer(obs.own_threshold, obs.pop_time)
         
         # Update self.memory
         self.memory[obs.balloon_color] += succ_fail_vector
