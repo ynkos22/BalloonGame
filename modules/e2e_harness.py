@@ -2,6 +2,8 @@
 
 from config import GameConfig
 from engine import Game
+from strategies import Strategy
+
 
 
 # Checks if the user's yaml document contains valid data
@@ -21,6 +23,9 @@ def get_strat_list(strat_name_list: str):
 def yaml_parser(file_path: str) -> GameConfig:
     pass
 
+# Returns the GameConfig object from the necessary information
+def make_obj(input: dict, strategies: list[Strategy]):
+    pass
 
 # Builds the correct game from a GameConfig object
 def build_game(config: GameConfig) -> Game:

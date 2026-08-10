@@ -17,7 +17,7 @@ class Game:
 
     # Returns a dictionary with player names and their respective payouts
     # This function is a bit long just covering all the cases of the rules of payout
-    def calc_payout(self, thresholds: dict, balloon: Balloon) -> dict:
+    def calc_payout(self, thresholds: dict, balloon: Balloon) -> dict[str, int]:
         pop_val = balloon.pop_value
         if len(thresholds) == 1:
             # Single-player
@@ -113,7 +113,7 @@ class Game:
 
     # Returns a tuple with the following content
     # index 0: dict: player_name -> observation object
-    # index 1: dict: player name -> tuple for insertion into sql table
+    # index 1: list: tuples for insertion into sql table
     def resolve_round(self, thresholds: dict, balloon: Balloon) -> tuple[dict[str, Observation], list[tuple]]:
         payout = self.calc_payout(thresholds, balloon)
         PnL_dict = self.update_PnL(self.strategies, payout)
