@@ -5,6 +5,7 @@ import numpy as np
 
 
 class Strategy:
+    
     def __init__(self, name: str):
         self.name = name
         self.PnL = 0
