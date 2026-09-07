@@ -13,9 +13,10 @@ multiplayer_mode: 0
 
 strategies:
     - name: constant_pump
-    params: pump_times
+      params: 
+        pump_times: 5
     - name: thompson_sampling
-    params: 
+      params: 
 
 color_map:
     red: 0.2
@@ -23,6 +24,8 @@ color_map:
     orange: 0.7
 ```
 NOTE: master_seed needs to be an integer, and if strategies have no parameters simply leave it blank as the example shown. Multplayer_mode is enabled with an entry of 1, and disabled with an entry of 0. If more than 2 strategies are entered into multiplayer mode, then a round-robin is played where for each seed every strategy will face every other strategy. num_seeds denotes how many individual GAME SEEDS there are, and each game csv is named with the individual seed. This seed can also be used as a master seed to replay a specific matchup.
+
+NOTE 2: If more than 2 strategies are included and multiplayer mode is enabled, then automatically round robin is played.
 
 
 
@@ -49,7 +52,7 @@ n5["save_game()"]
 n6{"More iterations?"}
 
 n1 --> n2
-n2 -- GameConfigs --> n3
+n2 -- dict --> n3
 n3 -- list[Game] --> n6 
 n6 -- Yes --> n4
 n4 --> n5 --> n6

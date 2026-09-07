@@ -1,20 +1,22 @@
 
 
-master_seed: 101
+master_seed: 10111
+
+num_seeds: 50
 
 num_balloons: 100
 
-mulitplayer_mode: False
+multiplayer_mode: 0
 
 strategies:
-- name: constant_pump
-  params:
-    pump_times: 3
-- name: thompson_sampling
+    - name: constant_pump
+      params: 
+        pump_times: 5
+    - name: thompson_sampling
+      params: 
 
 color_map:
-  red: 0.1
-  blue: 0.05
-  purple: 0.01
-
+    red: 0.2
+    blue: 0.4
+    orange: 0.7
 
