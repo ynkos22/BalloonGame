@@ -1,20 +1,34 @@
-from core import Balloon, Observation
+from core import Balloon, Observation, Context
 from config import COLOR_MAP
 import numpy as np
 
 
 
 class Strategy:
-    
-    def __init__(self, name: str):
+
+    PARAMS = []
+    KEY = ""
+    REGISTER = {}
+
+    def __init__(self, name: str, ctx: Context, rng: np.random.Generator):
         self.name = name
         self.PnL = 0
-        
+        self.rng = rng
+        self.ctx = ctx
         self.belief_state = {} # each color and the corresponding threshold
-        colors = list(COLOR_MAP.keys())
-        for color in colors:
+
+        # Initialize belief state with uniform belief
+        for color in self.ctx.colors:
             self.belief_state[color] = 1
-        
+
+    
+    def __init_subclass__(cls, **kwargs):
+
+        if cls.KEY not in Strategy.REGISTER:
+            Strategy.REGISTER[cls.KEY] = cls
+        else:
+            # Already contains the strategy
+            raise ValueError(f"duplicate strategy key {cls.KEY}: already registered")
         
     # Returns the pump threshold (at which value to cash) for a balloon
     def action(self, balloon: Balloon) -> int:
@@ -38,11 +52,14 @@ class Strategy:
             result_list[1] += 1
         return np.array(result_list)
 
-        
 
 class constant_pump(Strategy):
-    def __init__(self, pump_times: int):
-        super().__init__(name = f"constant_pump_{pump_times}")
+
+    PARAMS = [("pump_times", int)]
+    KEY = "constant_pump"
+
+    def __init__(self, pump_times: int, ctx: Context, rng: np.random.Generator):
+        super().__init__(name = f"constant_pump_{pump_times}", ctx=ctx, rng=rng)
         self.pump_times = pump_times
 
     def action(self, balloon: Balloon) -> int:
@@ -50,13 +67,19 @@ class constant_pump(Strategy):
 
 
 class explore_exploit(Strategy):
-    def __init__(self, ratio, num_balloons):
-        super().__init__(name=f"explore_exploit_{ratio}")
+
+    PARAMS = [("ratio", float)]
+    KEY = "explore_exploit"
+
+    def __init__(self, ratio: float, ctx: Context, rng: np.random.Generator):
+        super().__init__(name=f"explore_exploit_{ratio}", ctx=ctx, rng=rng)
         self.ratio = ratio
-        self.num_balloons = num_balloons
+        self.num_balloons = ctx.num_balloons
+
+        # Initialize memory with uniform
+        # Each color has [#successful, #failures] vector
         self.memory = {}
-        colors = list(COLOR_MAP.keys())
-        for color in colors:
+        for color in ctx.colors:
             self.memory[color] = np.array([1, 1])
 
     def action(self, balloon: Balloon) -> int:
@@ -78,10 +101,14 @@ class explore_exploit(Strategy):
         self.belief_state[obs.balloon_color] = max(1, int(np.ceil((1-p)/p)))
 
 class thompson_sampling(Strategy):
-    def __init__(self):
-        super().__init__(name = "thompson_sampling")
+
+    KEY = "thompson_sampling"
+
+    def __init__(self, ctx: Context, rng: np.random.Generator):
+        super().__init__(name = "thompson_sampling", ctx=ctx, rng=rng)
+
         self.memory = {}
-        colors = list(COLOR_MAP.keys())
+        colors = ctx.colors
         for color in colors:
             self.memory[color] = np.array([1, 1])
 
@@ -102,7 +129,7 @@ class thompson_sampling(Strategy):
 
     # Given Beta posterior parameters, this function samples a probability p from this distribution
     def thompson_sampler(self, a: int, b: int) -> float:
-        sample = np.random.beta(b, a)
+        sample = self.rng.beta(b, a)
         return sample
 
     def decision_rule(self, p: float):
@@ -110,8 +137,11 @@ class thompson_sampling(Strategy):
 
 
 class oracle(Strategy):
-    def __init__(self):
-        super().__init__(name = "oracle")
+
+    KEY = "oracle"
+
+    def __init__(self, ctx: Context, rng: np.random.Generator):
+        super().__init__(name = "oracle", ctx=ctx, rng=rng)
 
     def action(self, balloon: Balloon):
         p = COLOR_MAP[balloon.color]

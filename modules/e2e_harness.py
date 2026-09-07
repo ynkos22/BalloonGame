@@ -58,29 +58,8 @@ def make_obj(input: dict, strategies: list[Strategy]):
     multiplayer_mode = input["multiplayer_mode"]
     color_map = input["color_map"]
 
-    obj = GameConfig(seeds, num_balloons, color_map, strategies, multiplayer_mode)
+    obj = GameConfigs(seeds, num_balloons, color_map, strategies, multiplayer_mode)
     
     return obj
 
 
-# Parses a .yaml file and returns the correct Config objects for each seed
-def yaml_parser(file_path: str) -> GameConfig:
-    # check if valid input
-    with open(file_path) as f:
-        raw = yaml.safe_load(f)
-    valid_input = valid_game_input(raw)
-    strategies = get_strat_list(raw["strategies"])
-    if valid_input:
-        obj = make_obj(raw, strategies)
-        return obj
-    
-
-# Everyone faces everyone over all the seeds
-def round_robin(config: GameConfig):
-    pass
-
-# Returns the expected payout of a strategy (in ONE turn) 
-# by quoting threshold on a balloon with pop prob true_p
-# Used to calculate and plot pseudo regret
-def expected_payout(threshold: int, true_p: float):
-    pass

@@ -19,6 +19,10 @@ class Observation:
         self.balloon_color = balloon_color
         self.pop_time = pop_time # if it didn't pop default == 999
 
+class Context:
+    def __init__(self, num_balloons: int, colors: list[str]):
+        self.num_balloons = num_balloons
+        self.colors = colors # Note: these colors are all unique
 
 
 

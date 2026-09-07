@@ -20,7 +20,8 @@ params["PARAMS: list[tuple]"]
 register["REGISTER: dict[str, cls]"]
 key["KEY: str"]
 name["name: str"]
-ctx["context"]
+ctx["ctx: Context"]
+rng[rng: RNG object]
 Strategy["Strategy"]
 init["__init_subclass__(cls, **kwargs)"]
 from_name["from_name(cls, name: str, ctx: dict)"]
@@ -30,7 +31,7 @@ Strategy --> args
 Strategy --> methods
 
 
-args --> name & ctx
+args --> name & ctx & rng
 attr --> params & key & register
 methods --> init & from_name
 

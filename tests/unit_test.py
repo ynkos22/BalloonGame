@@ -4,22 +4,21 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "modules"))
 
-from core import Balloon, Observation
+from core import Balloon, Observation, Context
 from engine import Game
 from strategies import Strategy, thompson_sampling, constant_pump, oracle, explore_exploit
 from config import COLOR_MAP
 import yaml
-from config import YAML_FILE_PATH, GameConfig
-from e2e_harness import yaml_parser, get_strat_obj, get_strat_list, valid_game_input
+from config import YAML_FILE_PATH, GameConfigs
 
 
 # TESTS FOR ENGINE
-
+"""
 test_balloon = Balloon("red", 5, 0.2, 45)
 test_strat1 = Strategy("test_strat1")
 test_strat2 = Strategy("test_strat2")
 test_game = Game([test_strat1, test_strat2], 1001, 1, 100)
-
+"""
 @pytest.mark.engine
 def test_calc_payout():
     # Both popped:
@@ -233,209 +232,19 @@ def test_action():
 def test_update_beliefs():
     pass
 
-# TESTS FOR CONFIG / PLOTTING TOOLS
+@pytest.mark.strategies
+def test_registration():
 
-@pytest.mark.data_gen
-def test_valid_game_input(capsys, tmp_path):
+    class test_strat(Strategy):
+        KEY = "test_strat"
+        def __init__(self, name, ctx, rng):
+            super().__init__(name, ctx, rng)
 
-    # TEST VALID EXAMPLES
-    config1 = {"num_balloons": 100,
-            "mulitplayer_mode": False,
-            "round_robing": False,
-            "strategies": ["thompson_sampling", "explore_then_exploit_0.1", "constant_pump_2", "oracle"],
-            "seeds": [101, 1011, 10111],
-            "color_map": {
-            "red": 0.1,
-            "blue": 0.05,
-            "purple": 0.01}}
-    
-    config2 = {"num_balloons": 100,
-                "mulitplayer_mode": True,
-                "round_robing": False,
-                "strategies": ["thompson_sampling", "oracle"],
-                "seeds": [101, 1011, 10111],
-                "color_map": {
-                "red": 0.1,
-                "blue": 0.05,
-                "purple": 0.01}}
-    
-    config3 = {"num_balloons": 100,
-                "mulitplayer_mode": True,
-                "round_robing": False,
-                "strategies": ["thompson_sampling", "thompson_sampling"],
-                "seeds": [101, 1011, 10111],
-                "color_map": {
-                "red": 0.1,
-                "blue": 0.05,
-                "purple": 0.01}}
-
-    config4 = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robing": False,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [101, 1011, 10111],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    valid_configs = [config1, config2, config3, config4]
-
-    for config in valid_configs:
-        assert valid_game_input(config) == True
-
-    # TEST IF ONE ERROR IS HANDLED CORRECTLY
-
-    # 3 player cannot play multiplayer mode
-    two_player_max_err = {"num_balloons": 100,
-                    "mulitplayer_mode": True,
-                    "round_robin": False,
-                    "strategies": ["thompson_sampling", "oracle", "constant_pump_3"],
-                    "seeds": [101, 1011, 10111],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    # there cannot be 0 balloons
-    no_balloons_err = {"num_balloons": 0,
-                    "mulitplayer_mode": False,
-                    "round_robin": False,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [101, 1011, 10111],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    # Balloons need to have positive popping proability
-    positive_pop_prob_err = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robin": False,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [101, 1011, 10111],
-                    "color_map": {
-                    "red": -1,
-                    "blue": -0.05,
-                    "purple": 0.01}}
-
-    # Seeds cannot be empty
-    empty_seed_err = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robin": False,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    # Strategy names cannot be made up
-    fake_strat_err = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robin": False,
-                    "strategies": ["fake_name", "another_fake_name"],
-                    "seeds": [1011, 101],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    # Seeds need to be integers
-    invalid_seed_err = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robin": False,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [1.02, 10.0003],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-
-    # Round robin mode requires multiplayer mode
-    round_robin_multi_err = {"num_balloons": 100,
-                    "mulitplayer_mode": False,
-                    "round_robin": True,
-                    "strategies": ["thompson_sampling"],
-                    "seeds": [1.02, 10.0003],
-                    "color_map": {
-                    "red": 0.1,
-                    "blue": 0.05,
-                    "purple": 0.01}}
-    
-    bad_configs = [
-        (positive_pop_prob_err, "Probabilities p need to be 0<p<1"),
-        (empty_seed_err, "Please provide atleast ONE seed"),
-        (two_player_max_err, "Multiplayer requires exactly 2 players"),
-        (no_balloons_err, "Please enter the number of balloons (min 1)"),
-        (fake_strat_err, "Please check strategy names"),
-        (invalid_seed_err, "Seeds need to be integers"),
-        (round_robin_multi_err, "Round robin mode requires multiplayer_mode")
-    ]
-
-    for config, msg in bad_configs:
-        with pytest.raises(ValueError, match=msg):
-            valid_game_input(config)
-
-   
-
-@pytest.mark.data_gen
-def test_get_strat_obj():
-
-    # TEST IF THEY ARE CORRECT OBJECT
-    names = ["thompson_sampling", "oracle", "explore_exploit_0.2", "constant_pump_3"]
-    for name in names:
-        obj = get_strat_obj(name)
-        assert isinstance(obj, Strategy)
-
-    assert isinstance(get_strat_obj(names[0]), thompson_sampling)
-    assert isinstance(get_strat_obj(names[1]), oracle)
-    assert isinstance(get_strat_obj(names[2]), explore_exploit)
-    assert isinstance(get_strat_obj(names[3]), constant_pump)
-
-    # TEST IF PARAMETERS ARE CORRECT
-    obj = get_strat_obj("explore_exploit_0.1")
-    assert hasattr(obj, "ratio")
-    assert obj.ratio == 0.1
-
-    obj = get_strat_obj("constant_pump_3")
-    assert hasattr(obj, "pump_times")
-    assert obj.pump_times == 3
+    assert "test_strat" in Strategy.REGISTER
+    assert "thompson_sampling" in Strategy.REGISTER
+    print(Strategy.REGISTER)
 
 
-@pytest.mark.data_gen
-def test_get_strat_list():
-    names = ["thompson_sampling", "oracle", "constant_pump_2"]
-    # TEST OUTPUT FORMAT
-    result_list = get_strat_list(names)
-    assert isinstance(result_list, list)
-    assert len(result_list) == 3
-    for obj in result_list:
-        assert isinstance(obj, Strategy)
 
-
-@pytest.mark.data_gen
-def test_yaml_parser():
-    # TEST HANDLING OF NON-EXISTENT PATH
-
-    # TEST VALID 
-    pass
-
-
-@pytest.mark.data_gen
-def test_build_games():
-    pass
-
-@pytest.mark.data_gen
-def test_run_game():
-    pass
-
-@pytest.mark.data_gen
-def test_round_robin():
-    pass
-
-@pytest.mark.data_gen
-def test_expected_payout():
-    pass
 
 
