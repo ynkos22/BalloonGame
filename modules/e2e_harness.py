@@ -46,6 +46,7 @@ def build_games(raw_yaml: dict) -> list[Game]:
     Game_objects = []
 
     # Sort strategies 
+    raw_yaml["strategies"].sort(key=lambda x: x["name"])
 
     # Generate balloon seeds
     master_seed = raw_yaml["master_seed"]

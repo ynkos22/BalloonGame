@@ -15,6 +15,63 @@ class Game:
         self.num_balloons = num_balloons
         self.balloon_rng, self.tiebreak_rng = np.random.default_rng(seed).spawn(2)
 
+
+
+        # Iterates through all balloons 
+    
+        # Returns a list of balloons at the start of each round 
+    
+    
+    
+    # Same seed should return same balloons (colors, pop values, and probability)
+    def initialization(self, color_map: dict[str, float]) -> list[Balloon]:
+        balloon_list = []
+        rng = self.balloon_rng
+        colors = list(color_map.keys())
+        for i in range(self.num_balloons):
+            color = rng.choice(colors)
+            probability = color_map[color]
+            pop_value = rng.geometric(probability)
+            balloon_list.append(Balloon(color, pop_value, probability, i))
+            
+        return balloon_list
+       
+    # Each player makes a decision
+    # Round is resolved 
+    # Beliefs are updated
+    # SQL tables are updated
+    def balloon_loop(self, strategies: list[Strategy], balloons: list[Balloon], database_path: str) -> None:
+        conn = sqlite3.Connection(database_path)
+        SQL_handler = SQL_handling(conn, self.game_id)
+
+        try:
+            for balloon in balloons:
+                thresholds = {}
+                for strategy in strategies:
+                    # insert strategy decisions into thresholds
+                    thresholds[strategy.name] = strategy.action(balloon)
+                obs_dict, sql_list = self.resolve_round(thresholds, balloon)
+
+                # Update strategy beliefs
+                for strategy in strategies:
+                    strategy.update_beliefs(obs_dict[strategy.name])
+
+                # record into SQL table
+                SQL_handler.sql_insert(sql_list) #NOTE: not ONE tuple but a list of tuples
+        finally:
+            conn.commit()
+            conn.close()
+
+    # Main loop that runs once per game
+    def main(self, database_path: str, color_map: dict[str, float]):
+        balloon_list = self.initialization(color_map)
+        self.balloon_loop(self.strategies, balloon_list, database_path)
+        
+
+
+
+    # HELPER FUNCTIONS
+
     # Returns a dictionary with player names and their respective payouts
     # This function is a bit long just covering all the cases of the rules of payout
     def calc_payout(self, thresholds: dict, balloon: Balloon) -> dict[str, int]:
@@ -97,20 +154,6 @@ class Game:
         return return_list
       
 
-    # Returns a list of balloons at the start of each round 
-    # Same seed should return same balloons (colors, pop values, and probability)
-    def initialization(self, color_map: dict[str, float]) -> list[Balloon]:
-        balloon_list = []
-        rng = self.balloon_rng
-        colors = list(color_map.keys())
-        for i in range(self.num_balloons):
-            color = rng.choice(colors)
-            probability = color_map[color]
-            pop_value = rng.geometric(probability)
-            balloon_list.append(Balloon(color, pop_value, probability, i))
-            
-        return balloon_list
-
     # Returns a tuple with the following content
     # index 0: dict: player_name -> observation object
     # index 1: list: tuples for insertion into sql table
@@ -124,38 +167,7 @@ class Game:
 
         return (obs_dict, sql_list)
 
-    # Iterates through all balloons 
-    # Each player makes a decision
-    # Round is resolved 
-    # Beliefs are updated
-    # SQL tables are updated
-    def balloon_loop(self, strategies: list[Strategy], balloons: list[Balloon], database_path: str) -> None:
-        conn = sqlite3.Connection(database_path)
-        SQL_handler = SQL_handling(conn, self.game_id)
 
-        try:
-            for balloon in balloons:
-                thresholds = {}
-                for strategy in strategies:
-                    # insert strategy decisions into thresholds
-                    thresholds[strategy.name] = strategy.action(balloon)
-                obs_dict, sql_list = self.resolve_round(thresholds, balloon)
-
-                # Update strategy beliefs
-                for strategy in strategies:
-                    strategy.update_beliefs(obs_dict[strategy.name])
-
-                # record into SQL table
-                SQL_handler.sql_insert(sql_list) #NOTE: not ONE tuple but a list of tuples
-        finally:
-            conn.commit()
-            conn.close()
-
-    # Main loop that runs once per game
-    def main(self, database_path: str, color_map: dict[str, float]):
-        balloon_list = self.initialization(color_map)
-        self.balloon_loop(self.strategies, balloon_list, database_path)
-        
         
 
 

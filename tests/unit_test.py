@@ -7,12 +7,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from core import Balloon, Observation, Context
 from engine import Game
 from strategies import Strategy, thompson_sampling, constant_pump, oracle, explore_exploit
-from config import COLOR_MAP
+
 import yaml
 from config import YAML_FILE_PATH, GameConfigs
 
 
 # TESTS FOR ENGINE
+
 """
 test_balloon = Balloon("red", 5, 0.2, 45)
 test_strat1 = Strategy("test_strat1")
