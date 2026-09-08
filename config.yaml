@@ -9,9 +9,9 @@ num_balloons: 100
 multiplayer: 1
 
 strategies:
-    - name: constant_pump
+    - name: explore_exploit
       params: 
-        pump_times: 5
+        ratio: 0.2
     - name: thompson_sampling
       params: {}
 

@@ -66,7 +66,7 @@ def build_games(raw_yaml: dict) -> list[Game]:
             for a, b in combinations(raw_yaml["strategies"], 2):
                 strategies = strat_instance([a, b], strategy_seeds, ctx)
                 balloon_seed = balloon_seeds.pop()
-                game_id = balloon_seed + str(strategies)
+                game_id = str(balloon_seed) + strategies[0].name + "_" + strategies[1].name
                 num_balloons = ctx.num_balloons
                 game = Game(strategies, balloon_seed, game_id, num_balloons)
                 Game_objects.append(game)

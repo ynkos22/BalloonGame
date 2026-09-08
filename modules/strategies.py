@@ -71,7 +71,7 @@ class explore_exploit(Strategy):
     KEY = "explore_exploit"
 
     def __init__(self, ratio: float, ctx: Context, rng: np.random.Generator):
-        super().__init__(name=f"explore_exploit_{ratio}", ctx=ctx, rng=rng)
+        super().__init__(name="explore_exploit_" + self.helper_for_naming(str(ratio), ".", "_"), ctx=ctx, rng=rng)
         self.ratio = ratio
         self.num_balloons = ctx.num_balloons
 
@@ -98,6 +98,21 @@ class explore_exploit(Strategy):
         # Update self.belief_state
         p = self.memory[obs.balloon_color][1]/(self.memory[obs.balloon_color][0] + self.memory[obs.balloon_color][1])
         self.belief_state[obs.balloon_color] = max(1, int(np.ceil((1-p)/p)))
+
+    # replaces bad letter in string with good letter
+    # this function is needed since 0.2 can't be in a filename
+    def helper_for_naming(self, string: str, bad_letter: str, good_letter: str):
+
+        new_string = ""
+
+        for letter in string:
+            if letter == bad_letter:
+                new_string += good_letter
+            else:
+                new_string += letter
+
+        return new_string
+
 
 class thompson_sampling(Strategy):
 
