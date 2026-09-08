@@ -1,9 +1,15 @@
 
-
-from config import GameConfigs
+import yaml
+from itertools import combinations
+import numpy as np
 from engine import Game
 from strategies import Strategy
-import yaml
+from core import Context
+import sqlite3
+from sql_handling import SQL_handling
+import os 
+import sys
+import pandas as pd
 
 """
 yaml dict format:
@@ -18,7 +24,7 @@ yaml dict format:
 
 # Checks if the user's yaml document contains valid data
 # passes on the yaml dictionary used in build_games() if everything is valid
-def parse_inputs(yaml_path: str) -> GameConfigs:
+def parse_inputs(yaml_path: str) -> dict:
 
     with open(yaml_path) as f:
         raw_yaml = yaml.safe_load(f)
@@ -32,28 +38,75 @@ def parse_inputs(yaml_path: str) -> GameConfigs:
     # 3. Check game settings
     valid_game_settings = check_game_settings(raw_yaml)
 
-    if all(valid_game_settings, valid_parameters, valid_strategies):
+    if all([valid_game_settings, valid_parameters, valid_strategies]):
         return raw_yaml
 
 # Builds the correct games from a GameConfigs object
 def build_games(raw_yaml: dict) -> list[Game]:
+    Game_objects = []
+
     # Sort strategies 
 
+    # Generate balloon seeds
+    master_seed = raw_yaml["master_seed"]
+    num_seeds = raw_yaml["num_seeds"]
+    num_strategies = len(raw_yaml["strategies"])
+    rng = np.random.default_rng(master_seed)
+    balloon_seeds = list(rng.integers(low=10, high=10000, size=num_seeds))
+    ctx = Context(raw_yaml["num_balloons"], list(raw_yaml["color_map"].keys()))
+
+    # Multiplayer = ?
+    if raw_yaml["multiplayer"] == 1:
+        # Multiplayer mode
+        # Generate kC2x2n seeds
+        strategy_seeds = list(rng.integers(low=10, high=10000, size=num_strategies*(num_strategies-1)*num_seeds))
+
+        for i in range(num_seeds):
+            # Every matchup round robin
+            for a, b in combinations(raw_yaml["strategies"], 2):
+                strategies = strat_instance([a, b], strategy_seeds, ctx)
+                balloon_seed = balloon_seeds.pop()
+                game_id = balloon_seed + str(strategies)
+                num_balloons = ctx.num_balloons
+                game = Game(strategies, balloon_seed, game_id, num_balloons)
+                Game_objects.append(game)
 
 
-    # Generate seeds for balloons for each game 
+    else:
+        # Singleplayer mode
+        strategy_seeds = list(rng.integers(low=10, high=10000, size=num_seeds*num_strategies))
+        
+        for i in range(num_seeds):
+            strategies = strat_instance(raw_yaml["strategies"], strategy_seeds, ctx)
+            balloon_seed = balloon_seeds.pop()
+            num_balloons = ctx.num_balloons
+            for strategy in strategies:
+                game_id = str(balloon_seed) + "_" + strategy.name
+                game = Game([strategy], balloon_seed, game_id, num_balloons)
+                Game_objects.append(game)
 
-
-
-    pass
+    return Game_objects
 
 # Runs a game according to the config
-def run_game(game: Game) -> None:
-    pass
+# Returns the game_id of the game that it just ran
+def run_game(game: Game, database_path: str, color_map: dict[str, float]) -> int:
+    game_id = game.game_id 
+    game.main(database_path, color_map)
+
+    return game_id
 
 # Converts table in SQL to csv for plotting
-def save_game(game_id: int) -> None:
-    pass
+def save_games(game_ids: list[int], database_path: str, game_log_path: str) -> None:
+    conn = sqlite3.Connection(database_path)
+    
+    for game_id in game_ids:
+        game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
+        game_log.to_csv(os.path.join(game_log_path, f"game_{game_id}_log.csv"), index = False)
+
+
+    conn.commit()
+    conn.close()
+        
 
 
 
@@ -65,6 +118,7 @@ def save_game(game_id: int) -> None:
 # 3. if multiplayer == True, exactly 2 strategies
 # 4. num_balloons >= 1
 # 5. seeds are integers
+# 6. multiplayer must be 1 or 0
 def check_game_settings(raw_yaml: dict) -> bool:
 
     # 1. 
@@ -83,6 +137,9 @@ def check_game_settings(raw_yaml: dict) -> bool:
     # 5.
     if not isinstance(raw_yaml["master_seed"], int) or not isinstance(raw_yaml["num_seeds"], int):
         raise ValueError("seeds must be integers (and number of seeds)")
+
+    if raw_yaml["multiplayer"] != 0 and raw_yaml["multiplayer"] != 1:
+        raise ValueError("Multiplayer mode takes value 0 or 1")
     
     return True
 
@@ -98,7 +155,7 @@ def check_strat_names(raw_yaml: dict) -> bool:
 # Checks if parameters given are in the correct format
 def check_params(raw_yaml: dict) -> bool:
     strategies = raw_yaml["strategies"]
-
+    num_strategies = len(strategies)
     for strategy in strategies:
         key = strategy["name"]
         cls = Strategy.REGISTER[key]
@@ -113,8 +170,24 @@ def check_params(raw_yaml: dict) -> bool:
                         raise ValueError("parameter type wrong")
 
         if num_params == 0:
-            return True
+            num_strategies -= 1
         else:
             return False
+    if num_strategies == 0:
+        return True
+    else:
+        return False
 
+
+# Instantiates strategies
+# returns a list of strategy objects
+def strat_instance(strategies: list[dict], strat_seeds: list[int], ctx: Context):
+    strat_instances = []
+    for strat in strategies:
+        rng = np.random.default_rng(strat_seeds.pop())
+        cls = Strategy.REGISTER[strat["name"]]
+        strat_instances.append(cls(**strat["params"], ctx=ctx, rng=rng))
+
+    return strat_instances
+            
 

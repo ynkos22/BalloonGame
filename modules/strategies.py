@@ -1,5 +1,4 @@
 from core import Balloon, Observation, Context
-from config import COLOR_MAP
 import numpy as np
 
 
@@ -139,12 +138,14 @@ class thompson_sampling(Strategy):
 class oracle(Strategy):
 
     KEY = "oracle"
+    PARAMS = [("color_map", dict)]
 
-    def __init__(self, ctx: Context, rng: np.random.Generator):
+    def __init__(self, ctx: Context, rng: np.random.Generator, color_map: dict[str, float]):
         super().__init__(name = "oracle", ctx=ctx, rng=rng)
+        self.color_map = color_map
 
     def action(self, balloon: Balloon):
-        p = COLOR_MAP[balloon.color]
+        p = self.color_map[balloon.color]
         return max(1, int(np.ceil((1-p)/p)))
     
 

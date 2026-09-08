@@ -6,3 +6,4 @@ SUGGESTED FIXES (no particular order):
 4. config.py has a circular import problem that needs to be fixed
 5. Memory function of strategies is messy; hard to understand and not scalable. Need to change into more intuitive and scalable design.
 6. What's the point of payout_infer??
+7. main() function in harness.py doesn't work; need to be updated with new threading of color_map and DATABASE path.

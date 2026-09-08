@@ -4,7 +4,7 @@ from sql_handling import SQL_handling
 from core import Balloon, Observation
 import numpy as np
 import sqlite3
-from config import DATABASE_PATH, COLOR_MAP
+
 
 
 class Game:
@@ -99,13 +99,13 @@ class Game:
 
     # Returns a list of balloons at the start of each round 
     # Same seed should return same balloons (colors, pop values, and probability)
-    def initialization(self) -> list[Balloon]:
+    def initialization(self, color_map: dict[str, float]) -> list[Balloon]:
         balloon_list = []
         rng = self.balloon_rng
-        colors = list(COLOR_MAP.keys())
+        colors = list(color_map.keys())
         for i in range(self.num_balloons):
             color = rng.choice(colors)
-            probability = COLOR_MAP[color]
+            probability = color_map[color]
             pop_value = rng.geometric(probability)
             balloon_list.append(Balloon(color, pop_value, probability, i))
             
@@ -129,8 +129,8 @@ class Game:
     # Round is resolved 
     # Beliefs are updated
     # SQL tables are updated
-    def balloon_loop(self, strategies: list[Strategy], balloons: list[Balloon]) -> None:
-        conn = sqlite3.Connection(DATABASE_PATH)
+    def balloon_loop(self, strategies: list[Strategy], balloons: list[Balloon], database_path: str) -> None:
+        conn = sqlite3.Connection(database_path)
         SQL_handler = SQL_handling(conn, self.game_id)
 
         try:
@@ -152,9 +152,9 @@ class Game:
             conn.close()
 
     # Main loop that runs once per game
-    def main(self):
-        balloon_list = self.initialization()
-        self.balloon_loop(self.strategies, balloon_list)
+    def main(self, database_path: str, color_map: dict[str, float]):
+        balloon_list = self.initialization(color_map)
+        self.balloon_loop(self.strategies, balloon_list, database_path)
         
         
 

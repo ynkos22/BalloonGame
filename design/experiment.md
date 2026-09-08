@@ -16,7 +16,7 @@ strategies:
       params: 
         pump_times: 5
     - name: thompson_sampling
-      params: 
+      params: {}
 
 color_map:
     red: 0.2
