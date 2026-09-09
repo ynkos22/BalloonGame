@@ -55,10 +55,12 @@ def build_games(raw_yaml: dict) -> list[Game]:
     rng = np.random.default_rng(master_seed)
     if num_seeds == 1:
         balloon_seeds = [master_seed]
-    balloon_seeds = list(rng.integers(low=10, high=10000, size=num_seeds))
+
+    else:
+        balloon_seeds = list(rng.integers(low=10, high=10000, size=num_seeds))
+
     ctx = Context(raw_yaml["num_balloons"], list(raw_yaml["color_map"].keys()))
 
-    
 
     # Multiplayer = ?
     if raw_yaml["multiplayer"] == 1:
@@ -68,11 +70,11 @@ def build_games(raw_yaml: dict) -> list[Game]:
 
         for i in range(num_seeds):
             # Every matchup round robin
-            rng2 = np.random.default_rng(num_seeds[i])
+            rng2 = np.random.default_rng(balloon_seeds[i])
             strategy_seeds = list(rng2.integers(low=10, high=10000, size=num_strategies*(num_strategies-1)*num_seeds))
             for a, b in combinations(raw_yaml["strategies"], 2):
                 strategies = strat_instance([a, b], strategy_seeds, ctx)
-                balloon_seed = balloon_seeds.pop()
+                balloon_seed = balloon_seeds[i]
                 game_id = str(balloon_seed) + strategies[0].name + "_" + strategies[1].name
                 num_balloons = ctx.num_balloons
                 game = Game(strategies, balloon_seed, game_id, num_balloons)
@@ -83,10 +85,10 @@ def build_games(raw_yaml: dict) -> list[Game]:
         # Singleplayer mode
         
         for i in range(num_seeds):
-            rng2 = np.random.default_rng(num_seeds[i])
+            rng2 = np.random.default_rng(balloon_seeds[i])
             strategy_seeds = list(rng2.integers(low=10, high=10000, size=num_strategies))
             strategies = strat_instance(raw_yaml["strategies"], strategy_seeds, ctx)
-            balloon_seed = balloon_seeds.pop()
+            balloon_seed = balloon_seeds[i]
             num_balloons = ctx.num_balloons
             for strategy in strategies:
                 game_id = str(balloon_seed) + "_" + strategy.name
