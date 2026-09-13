@@ -1,22 +1,32 @@
 
 
-master_seed: 10111
+master_seed: 111
 
-num_seeds: 10
+num_seeds: 1
 
-num_balloons: 100
+num_balloons: 300
 
-multiplayer: 1
+multiplayer: 0
 
 strategies:
-    - name: explore_exploit
-      params: 
-        ratio: 0.2
-    - name: thompson_sampling
+    - name: guess
+      params: {
+        n: 9
+      }
+    - name: guess
+      params: {
+        n: 5
+      }
+    - name: guess
+      params: {
+        n: 3
+      }
+    - name: average_balloon
       params: {}
 
 color_map:
     red: 0.2
     blue: 0.4
     orange: 0.7
+    purple: 0.9
 

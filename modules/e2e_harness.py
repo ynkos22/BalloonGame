@@ -1,4 +1,5 @@
 
+import json
 import yaml
 from itertools import combinations
 import numpy as np
@@ -75,7 +76,7 @@ def build_games(raw_yaml: dict) -> list[Game]:
             for a, b in combinations(raw_yaml["strategies"], 2):
                 strategies = strat_instance([a, b], strategy_seeds, ctx)
                 balloon_seed = balloon_seeds[i]
-                game_id = str(balloon_seed) + strategies[0].name + "_" + strategies[1].name
+                game_id = str(balloon_seed) + "_" + strategies[0].name + "_" + strategies[1].name
                 num_balloons = ctx.num_balloons
                 game = Game(strategies, balloon_seed, game_id, num_balloons)
                 Game_objects.append(game)
@@ -106,17 +107,40 @@ def run_game(game: Game, database_path: str, color_map: dict[str, float]) -> int
     return game_id
 
 # Converts table in SQL to csv for plotting
-def save_games(game_ids: list[int], database_path: str, game_log_path: str) -> None:
+# Also writes a manifest beside each csv, see write_manifest()
+def save_games(games: list[Game], database_path: str, game_log_path: str, raw_yaml: dict) -> None:
     conn = sqlite3.Connection(database_path)
-    
-    for game_id in game_ids:
-        game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
-        game_log.to_csv(os.path.join(game_log_path, f"game_{game_id}_log.csv"), index = False)
+
+    try:
+        for game in games:
+            game_id = game.game_id
+            game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
+            game_log.to_csv(os.path.join(game_log_path, f"game_{game_id}_log.csv"), index = False)
+            write_manifest(game, game_log_path, raw_yaml)
+    finally:
+        conn.commit()
+        conn.close()
 
 
-    conn.commit()
-    conn.close()
-        
+# Writes the run settings that the csv itself cannot carry
+# The colour probabilities are the important one: regret is measured against the
+# optimal threshold for each colour, so without them a log cannot be scored later.
+# game_id is not reliably parseable back into (seed, strategies) because strategy
+# names contain underscores, so the manifest is the source of truth for both.
+def write_manifest(game: Game, game_log_path: str, raw_yaml: dict) -> None:
+    manifest = {
+        "game_id": game.game_id,
+        "seed": int(game.seed),
+        "num_balloons": int(game.num_balloons),
+        "multiplayer": int(raw_yaml["multiplayer"]),
+        "strategies": [strategy.name for strategy in game.strategies],
+        "color_map": {str(color): float(p) for color, p in raw_yaml["color_map"].items()},
+    }
+
+    manifest_path = os.path.join(game_log_path, f"game_{game.game_id}_meta.json")
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2)
+
 
 
 

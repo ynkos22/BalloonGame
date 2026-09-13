@@ -162,7 +162,70 @@ class oracle(Strategy):
     def action(self, balloon: Balloon):
         p = self.color_map[balloon.color]
         return max(1, int(np.ceil((1-p)/p)))
+
+
+
+# With a probability eps, the strategy explores
+# and with a probability 1-eps, the strategy exploits
+
+class epsilon_greedy(Strategy):
+
+    PARAMS = [("eps", float)]
+    KEY = "epsilon_greedy"
+
+    def __init__(self, name, ctx, rng, eps: float):
+        super().__init__(name, ctx, rng)
+        self.eps = eps
+
+    def action(self, balloon: Balloon) -> int:
+
+        random_draw = self.rng.random()
+
+        if random_draw > self.eps:
+            # exploitation phase
+            return self.belief_state[balloon.color]
+        else:
+            # exploration phase
+            return 1000
+
+    def update_beliefs(self, obs: Observation) -> None:
+        succ_fail_vector = self.payout_infer(obs.own_threshold, obs.pop_time)
+        
+        # Update self.memory
+        self.memory[obs.balloon_color] += succ_fail_vector
+        
+        # Update self.belief_state
+        p = self.memory[obs.balloon_color][1]/(self.memory[obs.balloon_color][0] + self.memory[obs.balloon_color][1])
+        self.belief_state[obs.balloon_color] = max(1, int(np.ceil((1-p)/p)))
+
+
+
+class guess(Strategy):
+    PARAMS = [("n", int)]
+    KEY = "guess"
+    def __init__(self, n, ctx, rng):
+        super().__init__(name = f"guess_{n}", ctx=ctx, rng=rng)
+        self.n = n
+
+    def action(self, balloon: Balloon):
+        return int(self.rng.integers(low=1, high=self.n))
+
+
+class average_balloon(Strategy):
+    KEY = "average_balloon"
+    def __init__(self, ctx, rng):
+        super().__init__(name="average_balloon", ctx=ctx, rng=rng)
+
+
+    def action(self, balloon: Balloon):
+        return 1
+
+
+
     
+            
+
+
 
 
     
