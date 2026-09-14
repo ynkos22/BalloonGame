@@ -1,0 +1,23 @@
+run_name: eps_greedy_vs_Claude
+master_seed: 111
+num_seeds: 50
+num_balloons: 300
+multiplayer: 0
+strategies:
+- name: bayes_dp
+  params: {}
+- name: epsilon_greedy
+  params:
+    eps: 0.0
+- name: oracle
+  params:
+    color_map:
+      red: 0.1
+      blue: 0.4
+      orange: 0.6
+      purple: 0.8
+color_map:
+  red: 0.1
+  blue: 0.4
+  orange: 0.6
+  purple: 0.8

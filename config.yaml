@@ -1,13 +1,13 @@
 
 
-run_name: eps_greedy_vs_bayes_myopic
+run_name: eps_greedy_vs_Claude_1000
 
 
 master_seed: 111
 
 num_seeds: 50
 
-num_balloons: 300
+num_balloons: 1000
 
 multiplayer: 0
 
@@ -15,7 +15,7 @@ strategies:
     - name: epsilon_greedy
       params:
         eps: 0.0
-    - name: bayes_myopic
+    - name: bayes_dp
       params: {}
 
     - name: oracle
