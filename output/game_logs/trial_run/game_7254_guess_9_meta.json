@@ -1,0 +1,15 @@
+{
+  "game_id": "7254_guess_9",
+  "seed": 7254,
+  "num_balloons": 300,
+  "multiplayer": 0,
+  "strategies": [
+    "guess_9"
+  ],
+  "color_map": {
+    "red": 0.2,
+    "blue": 0.4,
+    "orange": 0.7,
+    "purple": 0.9
+  }
+}

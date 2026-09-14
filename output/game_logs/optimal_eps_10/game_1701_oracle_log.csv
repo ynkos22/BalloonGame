@@ -1,0 +1,11 @@
+balloon_id,balloon_color,pop_time,strategy_name,threshold,end_PnL
+0,orange,1,oracle,1,0
+1,blue,2,oracle,2,0
+2,orange,1,oracle,1,0
+3,red,1,oracle,4,0
+4,blue,3,oracle,2,2
+5,red,5,oracle,4,6
+6,purple,1,oracle,1,6
+7,blue,9,oracle,2,8
+8,blue,3,oracle,2,10
+9,blue,1,oracle,2,10

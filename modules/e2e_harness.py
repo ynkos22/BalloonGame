@@ -2,6 +2,7 @@
 import json
 import yaml
 from itertools import combinations
+from pathlib import Path
 import numpy as np
 from engine import Game
 from strategies import Strategy
@@ -10,6 +11,7 @@ import sqlite3
 from sql_handling import SQL_handling
 import os 
 import sys
+import time
 import pandas as pd
 
 """
@@ -112,11 +114,15 @@ def save_games(games: list[Game], database_path: str, game_log_path: str, raw_ya
     conn = sqlite3.Connection(database_path)
 
     try:
+        new_folder = os.path.join(game_log_path, raw_yaml["run_name"])
+        Path(new_folder).mkdir(exist_ok = True)
+        new_yaml = os.path.join(new_folder, "config.yaml")
+        with open(new_yaml, "w") as f:
+            yaml.safe_dump(raw_yaml, f, sort_keys=False, default_flow_style=False)
         for game in games:
             game_id = game.game_id
             game_log = pd.read_sql_query(f"SELECT * FROM game_{game_id}", conn)
-            game_log.to_csv(os.path.join(game_log_path, f"game_{game_id}_log.csv"), index = False)
-            write_manifest(game, game_log_path, raw_yaml)
+            game_log.to_csv(os.path.join(new_folder, f"game_{game_id}_log.csv"), index = False)
     finally:
         conn.commit()
         conn.close()
@@ -127,7 +133,7 @@ def save_games(games: list[Game], database_path: str, game_log_path: str, raw_ya
 # optimal threshold for each colour, so without them a log cannot be scored later.
 # game_id is not reliably parseable back into (seed, strategies) because strategy
 # names contain underscores, so the manifest is the source of truth for both.
-def write_manifest(game: Game, game_log_path: str, raw_yaml: dict) -> None:
+def make_manifest(game: Game, game_log_path: str, raw_yaml: dict) -> dict:
     manifest = {
         "game_id": game.game_id,
         "seed": int(game.seed),
@@ -136,10 +142,8 @@ def write_manifest(game: Game, game_log_path: str, raw_yaml: dict) -> None:
         "strategies": [strategy.name for strategy in game.strategies],
         "color_map": {str(color): float(p) for color, p in raw_yaml["color_map"].items()},
     }
-
-    manifest_path = os.path.join(game_log_path, f"game_{game.game_id}_meta.json")
-    with open(manifest_path, "w") as f:
-        json.dump(manifest, f, indent=2)
+    return manifest
+    
 
 
 

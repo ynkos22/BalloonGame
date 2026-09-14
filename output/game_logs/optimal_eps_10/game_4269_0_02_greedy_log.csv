@@ -1,0 +1,11 @@
+balloon_id,balloon_color,pop_time,strategy_name,threshold,end_PnL
+0,orange,1,0_02_greedy,1,0
+1,orange,2,0_02_greedy,1,1
+2,orange,2,0_02_greedy,1,2
+3,purple,1,0_02_greedy,1000,2
+4,red,5,0_02_greedy,1,3
+5,purple,2,0_02_greedy,1,4
+6,orange,1,0_02_greedy,2,4
+7,orange,2,0_02_greedy,1,5
+8,orange,1,0_02_greedy,2,5
+9,purple,1,0_02_greedy,1,5

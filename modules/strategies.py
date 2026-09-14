@@ -173,9 +173,15 @@ class epsilon_greedy(Strategy):
     PARAMS = [("eps", float)]
     KEY = "epsilon_greedy"
 
-    def __init__(self, name, ctx, rng, eps: float):
-        super().__init__(name, ctx, rng)
+    def __init__(self, ctx, rng, eps: float):
+        super().__init__(name=self.helper_for_naming(str(eps), ".", "_") + "_greedy", ctx=ctx, rng=rng)
         self.eps = eps
+
+        # Initialize memory with uniform
+        # Each color has [#successful, #failures] vector
+        self.memory = {}
+        for color in ctx.colors:
+            self.memory[color] = np.array([1, 1])
 
     def action(self, balloon: Balloon) -> int:
 
@@ -198,6 +204,19 @@ class epsilon_greedy(Strategy):
         p = self.memory[obs.balloon_color][1]/(self.memory[obs.balloon_color][0] + self.memory[obs.balloon_color][1])
         self.belief_state[obs.balloon_color] = max(1, int(np.ceil((1-p)/p)))
 
+    # replaces bad letter in string with good letter
+    # this function is needed since 0.2 can't be in a filename
+    def helper_for_naming(self, string: str, bad_letter: str, good_letter: str):
+
+        new_string = ""
+
+        for letter in string:
+            if letter == bad_letter:
+                new_string += good_letter
+            else:
+                new_string += letter
+
+        return new_string
 
 
 class guess(Strategy):

@@ -1,0 +1,29 @@
+run_name: baseline_strategies_avg
+master_seed: 111
+num_seeds: 50
+num_balloons: 300
+multiplayer: 0
+strategies:
+- name: average_balloon
+  params: {}
+- name: guess
+  params:
+    n: 9
+- name: guess
+  params:
+    n: 5
+- name: guess
+  params:
+    n: 3
+- name: oracle
+  params:
+    color_map:
+      red: 0.2
+      blue: 0.4
+      orange: 0.7
+      purple: 0.9
+color_map:
+  red: 0.2
+  blue: 0.4
+  orange: 0.7
+  purple: 0.9

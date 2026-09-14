@@ -1,0 +1,39 @@
+run_name: optimal_eps_500
+master_seed: 111
+num_seeds: 50
+num_balloons: 500
+multiplayer: 0
+strategies:
+- name: epsilon_greedy
+  params:
+    eps: 0.02
+- name: epsilon_greedy
+  params:
+    eps: 0.04
+- name: epsilon_greedy
+  params:
+    eps: 0.08
+- name: epsilon_greedy
+  params:
+    eps: 0.16
+- name: epsilon_greedy
+  params:
+    eps: 0.32
+- name: epsilon_greedy
+  params:
+    eps: 0.64
+- name: epsilon_greedy
+  params:
+    eps: 0.8
+- name: oracle
+  params:
+    color_map:
+      red: 0.2
+      blue: 0.4
+      orange: 0.7
+      purple: 0.9
+color_map:
+  red: 0.2
+  blue: 0.4
+  orange: 0.7
+  purple: 0.9
