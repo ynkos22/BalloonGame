@@ -27,9 +27,8 @@ plain greedy learning.*
 - A Beta prior on `p` stays conjugate under censoring: a pop at `v` adds one failure and `v-1`
   successes, a survival of `k` pumps adds `k` successes. Every built-in learner uses this update.
 
-[GAME_DYNAMICS.md](GAME_DYNAMICS.md) is the complete specification: exact payout rules for both
-modes, the strategy interface, sensitivity of payout to a wrong threshold, best responses and
-equilibria of the head-to-head game, and implementation quirks.
+
+
 
 ## Results
 
